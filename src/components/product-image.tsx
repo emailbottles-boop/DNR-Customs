@@ -22,11 +22,11 @@ export function ProductImage({
   if (!src) {
     return (
       <div
-        className={`flex h-full w-full items-center justify-center bg-surface-raised ${className}`}
+        className={`flex h-full w-full items-center justify-center bg-paper-deep ${className}`}
         // Decorative placeholder; the product name is already in the DOM.
         aria-hidden="true"
       >
-        <span className="eyebrow">No image</span>
+        <span className="label text-ink-faint">No image</span>
       </div>
     );
   }

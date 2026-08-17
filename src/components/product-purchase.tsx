@@ -60,17 +60,17 @@ export function ProductPurchase({ product }: { product: Product }) {
   }
 
   return (
-    <div>
-      <p className="text-2xl font-semibold">
+    <div className="mt-12 border-t border-rule pt-10">
+      <p className="text-lg font-light">
         {price ? format(price) : "Unavailable"}
       </p>
 
       {colors.length > 0 ? (
-        <fieldset className="mt-8">
-          <legend className="eyebrow">
+        <fieldset className="mt-12">
+          <legend className="label">
             Colour{color ? ` — ${color}` : ""}
           </legend>
-          <div className="mt-3 flex flex-wrap gap-2">
+          <div className="mt-4 flex flex-wrap gap-2">
             {colors.map((option) => {
               const available = colorAvailable(option);
               return (
@@ -80,11 +80,7 @@ export function ProductPurchase({ product }: { product: Product }) {
                   disabled={!available}
                   aria-pressed={color === option}
                   onClick={() => setColor(option)}
-                  className={`rounded-md border px-4 py-2 text-sm transition-colors ${
-                    color === option
-                      ? "border-accent bg-accent text-accent-contrast"
-                      : "border-border hover:border-muted"
-                  } ${available ? "" : "cursor-not-allowed opacity-35 line-through"}`}
+                  className="swatch px-5 py-3 text-[11px] uppercase tracking-[0.18em]"
                 >
                   {option}
                 </button>
@@ -95,9 +91,9 @@ export function ProductPurchase({ product }: { product: Product }) {
       ) : null}
 
       {sizes.length > 0 ? (
-        <fieldset className="mt-7">
-          <legend className="eyebrow">Size{size ? ` — ${size}` : ""}</legend>
-          <div className="mt-3 flex flex-wrap gap-2">
+        <fieldset className="mt-10">
+          <legend className="label">Size{size ? ` — ${size}` : ""}</legend>
+          <div className="mt-4 flex flex-wrap gap-2">
             {sizes.map((option) => {
               const available = sizeAvailable(option);
               return (
@@ -107,11 +103,7 @@ export function ProductPurchase({ product }: { product: Product }) {
                   disabled={!available}
                   aria-pressed={size === option}
                   onClick={() => setSize(option)}
-                  className={`min-w-14 rounded-md border px-4 py-2 text-sm transition-colors ${
-                    size === option
-                      ? "border-accent bg-accent text-accent-contrast"
-                      : "border-border hover:border-muted"
-                  } ${available ? "" : "cursor-not-allowed opacity-35 line-through"}`}
+                  className="swatch min-w-16 px-5 py-3 text-[11px] uppercase tracking-[0.18em]"
                 >
                   {option}
                 </button>
@@ -121,33 +113,28 @@ export function ProductPurchase({ product }: { product: Product }) {
         </fieldset>
       ) : null}
 
-      <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+      <div className="mt-14 flex flex-col gap-3 sm:flex-row">
         <button
           type="button"
           onClick={handleAdd}
           disabled={!canAdd}
-          className="rounded-md bg-accent px-7 py-3.5 text-sm font-semibold text-accent-contrast transition-colors hover:bg-accent-strong disabled:cursor-not-allowed disabled:bg-surface-raised disabled:text-muted"
+          className="btn btn-primary"
         >
           {canAdd ? "Add to cart" : "Unavailable"}
         </button>
 
-        <Link
-          href="/cart"
-          className={`rounded-md border border-border px-7 py-3.5 text-center text-sm font-semibold transition-all ${
-            added ? "border-accent text-accent" : "hover:border-muted"
-          }`}
-        >
+        <Link href="/cart" className="btn btn-ghost">
           {added ? "Added — view cart" : "View cart"}
         </Link>
       </div>
 
       {/* Announced politely so screen readers hear the result of the click. */}
-      <p role="status" aria-live="polite" className="mt-3 h-5 text-sm text-accent">
+      <p role="status" aria-live="polite" className="label mt-5 h-5">
         {added && selected ? `${product.name} (${selected.name}) added.` : ""}
       </p>
 
       {!canAdd && selected === undefined ? (
-        <p className="mt-1 text-sm text-muted">
+        <p className="mt-1 text-xs text-ink-soft">
           That combination isn&apos;t made. Try another colour or size.
         </p>
       ) : null}

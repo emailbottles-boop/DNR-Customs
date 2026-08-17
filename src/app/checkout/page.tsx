@@ -197,21 +197,21 @@ export default function CheckoutPage() {
 
   if (!ready) {
     return (
-      <div className="mx-auto max-w-4xl px-5 py-16">
-        <p className="eyebrow">Loading…</p>
+      <div className="mx-auto max-w-4xl px-5 py-24">
+        <p className="label">Loading…</p>
       </div>
     );
   }
 
   if (cart.lines.length === 0) {
     return (
-      <div className="mx-auto max-w-4xl px-5 py-20 text-center">
-        <h1 className="display text-3xl">Nothing to check out</h1>
-        <p className="mt-3 text-sm text-muted">Your cart is empty.</p>
-        <Link
-          href="/shop"
-          className="mt-8 inline-block rounded-md bg-accent px-7 py-3.5 text-sm font-semibold text-accent-contrast transition-colors hover:bg-accent-strong"
-        >
+      <div className="mx-auto max-w-2xl px-5 py-32 text-center">
+        <p className="label">Checkout</p>
+        <h1 className="display mt-6 text-5xl sm:text-6xl">
+          Nothing to check out
+        </h1>
+        <p className="mt-8 text-sm text-ink-soft">Your cart is empty.</p>
+        <Link href="/shop" className="btn btn-primary mt-12">
           Browse the shop
         </Link>
       </div>
@@ -221,20 +221,20 @@ export default function CheckoutPage() {
   const grandTotal = shipping ? total.amount + shipping.rate.amount : total.amount;
 
   return (
-    <div className="mx-auto max-w-5xl px-5 py-14">
-      <p className="eyebrow">Step 2 of 2</p>
-      <h1 className="display mt-2 text-4xl">Checkout</h1>
+    <div className="mx-auto max-w-5xl px-5 py-24">
+      <p className="label">Step 2 of 2</p>
+      <h1 className="display mt-5 text-6xl sm:text-7xl">Checkout</h1>
 
-      <div className="mt-10 grid gap-12 lg:grid-cols-[1fr_360px]">
+      <div className="mt-20 grid gap-16 lg:grid-cols-[1fr_320px] lg:gap-24">
         <form
-          className="space-y-5"
+          className="space-y-8"
           onSubmit={(event) => {
             event.preventDefault();
             if (options) void handlePlaceOrder();
             else void handleQuote();
           }}
         >
-          <h2 className="text-sm font-semibold">Delivery address</h2>
+          <h2 className="label border-b border-rule pb-4">Delivery address</h2>
 
           <Field
             label="Full name"
@@ -267,7 +267,7 @@ export default function CheckoutPage() {
             onChange={(value) => update("address2", value)}
           />
 
-          <div className="grid gap-5 sm:grid-cols-2">
+          <div className="grid gap-8 sm:grid-cols-2">
             <Field
               label="City"
               value={form.city}
@@ -290,7 +290,7 @@ export default function CheckoutPage() {
             />
           </div>
 
-          <div className="grid gap-5 sm:grid-cols-2">
+          <div className="grid gap-8 sm:grid-cols-2">
             <Field
               label="Country code"
               value={form.country_code}
@@ -319,38 +319,40 @@ export default function CheckoutPage() {
           />
 
           {options ? (
-            <fieldset className="pt-4">
-              <legend className="text-sm font-semibold">Shipping method</legend>
-              <div className="mt-3 space-y-2">
+            <fieldset className="pt-8">
+              <legend className="label">Shipping method</legend>
+              <div className="mt-6 border-t border-rule">
                 {options.map((option) => (
                   <label
                     key={option.id}
-                    className={`flex cursor-pointer items-center justify-between gap-4 rounded-md border p-4 transition-colors ${
-                      shipping?.id === option.id
-                        ? "border-accent bg-surface"
-                        : "border-border hover:border-muted"
-                    }`}
+                    className="flex cursor-pointer items-center justify-between gap-6 border-b border-rule py-5"
                   >
-                    <span className="flex items-center gap-3">
+                    <span className="flex items-center gap-4">
                       <input
                         type="radio"
                         name="shipping"
                         value={option.id}
                         checked={shipping?.id === option.id}
                         onChange={() => setChosenShippingId(option.id)}
-                        className="accent-accent"
+                        className="accent-ink"
                       />
-                      <span className="text-sm">
+                      <span
+                        className={`text-sm transition-colors ${
+                          shipping?.id === option.id
+                            ? "text-ink"
+                            : "text-ink-soft"
+                        }`}
+                      >
                         {option.name}
                         {option.minDeliveryDays && option.maxDeliveryDays ? (
-                          <span className="block text-xs text-muted">
+                          <span className="mt-1 block text-xs text-ink-faint">
                             {option.minDeliveryDays}–{option.maxDeliveryDays}{" "}
                             business days
                           </span>
                         ) : null}
                       </span>
                     </span>
-                    <span className="text-sm font-semibold">
+                    <span className="text-sm whitespace-nowrap">
                       {option.rate.formatted}
                     </span>
                   </label>
@@ -362,42 +364,47 @@ export default function CheckoutPage() {
           {error ? (
             <p
               role="alert"
-              className="rounded-md border border-danger/40 bg-danger/10 p-3 text-sm text-danger"
+              className="border-l border-alert py-1 pl-4 text-sm text-alert"
             >
               {error}
             </p>
           ) : null}
 
-          <button
-            type="submit"
-            disabled={!addressComplete || quoting || placing}
-            className="w-full rounded-md bg-accent px-7 py-3.5 text-sm font-semibold text-accent-contrast transition-colors hover:bg-accent-strong disabled:cursor-not-allowed disabled:bg-surface-raised disabled:text-muted sm:w-auto"
-          >
-            {quoting
-              ? "Getting rates…"
-              : placing
-                ? "Placing order…"
-                : options
-                  ? "Place order"
-                  : "Continue to shipping"}
-          </button>
+          <div className="pt-4">
+            <button
+              type="submit"
+              disabled={!addressComplete || quoting || placing}
+              className="btn btn-primary w-full sm:w-auto"
+            >
+              {quoting
+                ? "Getting rates…"
+                : placing
+                  ? "Placing order…"
+                  : options
+                    ? "Place order"
+                    : "Continue to shipping"}
+            </button>
 
-          {!addressComplete ? (
-            <p className="text-xs text-muted">
-              Fill in the required fields to continue.
-            </p>
-          ) : null}
+            {!addressComplete ? (
+              <p className="mt-4 text-xs text-ink-faint">
+                Fill in the required fields to continue.
+              </p>
+            ) : null}
+          </div>
         </form>
 
-        <aside className="h-fit rounded-lg border border-border bg-surface p-6 lg:sticky lg:top-24">
-          <h2 className="text-sm font-semibold">Order summary</h2>
+        <aside className="h-fit border-t border-rule pt-6 lg:sticky lg:top-28">
+          <h2 className="label">Order summary</h2>
 
-          <ul className="mt-5 space-y-3">
+          <ul className="mt-6">
             {cart.lines.map((line) => (
-              <li key={line.variantId} className="flex justify-between gap-4 text-sm">
+              <li
+                key={line.variantId}
+                className="flex justify-between gap-6 border-b border-rule py-4 text-sm"
+              >
                 <span className="min-w-0">
                   <span className="block truncate">{line.productName}</span>
-                  <span className="block text-xs text-muted">
+                  <span className="mt-1 block text-xs text-ink-faint">
                     {line.variantName} × {line.quantity}
                   </span>
                 </span>
@@ -411,24 +418,24 @@ export default function CheckoutPage() {
             ))}
           </ul>
 
-          <dl className="mt-6 space-y-2 border-t border-border pt-4 text-sm">
+          <dl className="mt-6 space-y-3 text-sm">
             <div className="flex justify-between">
-              <dt className="text-muted">Subtotal</dt>
+              <dt className="label">Subtotal</dt>
               <dd>{format(total)}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-muted">Shipping</dt>
+              <dt className="label">Shipping</dt>
               <dd>{shipping ? shipping.rate.formatted : "—"}</dd>
             </div>
-            <div className="flex justify-between border-t border-border pt-2 font-semibold">
-              <dt>Total</dt>
-              <dd>
+            <div className="flex items-baseline justify-between border-t border-rule pt-4">
+              <dt className="label">Total</dt>
+              <dd className="text-base">
                 {format({ amount: grandTotal, currency: total.currency })}
               </dd>
             </div>
           </dl>
 
-          <p className="mt-4 text-xs leading-relaxed text-muted">
+          <p className="editorial mt-8 text-sm leading-relaxed text-ink-soft">
             Taxes, where applicable, are calculated by the fulfiller and shown on
             your invoice.
           </p>
@@ -461,7 +468,7 @@ function Field({
 
   return (
     <div>
-      <label htmlFor={id} className="block text-sm text-muted">
+      <label htmlFor={id} className="label block">
         {label}
       </label>
       <input
@@ -473,16 +480,14 @@ function Field({
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? `${id}-error` : hint ? `${id}-hint` : undefined}
         onChange={(event) => onChange(event.target.value)}
-        className={`mt-1.5 w-full rounded-md border bg-surface px-3.5 py-2.5 text-sm transition-colors ${
-          error ? "border-danger" : "border-border focus:border-muted"
-        }`}
+        className="field-input mt-2"
       />
       {error ? (
-        <p id={`${id}-error`} className="mt-1.5 text-xs text-danger">
+        <p id={`${id}-error`} className="mt-2 text-xs text-alert">
           {error}
         </p>
       ) : hint ? (
-        <p id={`${id}-hint`} className="mt-1.5 text-xs text-muted">
+        <p id={`${id}-hint`} className="mt-2 text-xs text-ink-faint">
           {hint}
         </p>
       ) : null}

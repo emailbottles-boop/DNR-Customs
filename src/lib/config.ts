@@ -20,7 +20,7 @@ const stripeSecret = optional("STRIPE_SECRET_KEY");
 export const config = {
   brand: {
     name: "DNR Customs",
-    tagline: "Custom-made apparel, printed to order.",
+    tagline: "Made to order, never to stock.",
     email: optional("CONTACT_EMAIL") ?? "hello@dnrcustoms.com",
   },
 

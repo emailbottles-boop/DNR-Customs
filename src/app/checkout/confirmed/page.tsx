@@ -20,43 +20,42 @@ export default async function ConfirmedPage({
   const stripeSession = firstValue(params.session_id);
 
   return (
-    <div className="mx-auto max-w-2xl px-5 py-20 text-center">
-      <p className="eyebrow">Order received</p>
-      <h1 className="display mt-3 text-4xl">Thank you.</h1>
+    <div className="mx-auto max-w-2xl px-5 py-32 text-center">
+      <p className="label">Order received</p>
+      <h1 className="display mt-8 text-6xl sm:text-7xl">Thank you.</h1>
 
       {reference ? (
-        <p className="mt-6 text-sm text-muted">
+        <p className="mx-auto mt-12 max-w-md text-sm leading-relaxed text-ink-soft">
           Your reference is{" "}
-          <span className="font-mono text-foreground">{reference}</span>. Keep it
-          handy if you need to get in touch.
+          <span className="font-mono text-ink">{reference}</span>. Keep it handy
+          if you need to get in touch.
         </p>
       ) : null}
 
       {instructions ? (
-        <p className="mt-4 text-sm leading-relaxed text-muted">{instructions}</p>
+        <p className="mx-auto mt-6 max-w-md text-sm leading-relaxed text-ink-soft">
+          {instructions}
+        </p>
       ) : stripeSession ? (
-        <p className="mt-4 text-sm leading-relaxed text-muted">
-          Payment received. We&apos;ve emailed your receipt, and your order goes into
-          production shortly.
+        <p className="mx-auto mt-6 max-w-md text-sm leading-relaxed text-ink-soft">
+          Payment received. We&apos;ve emailed your receipt, and your order goes
+          into production shortly.
         </p>
       ) : (
-        <p className="mt-4 text-sm leading-relaxed text-muted">
+        <p className="mx-auto mt-6 max-w-md text-sm leading-relaxed text-ink-soft">
           We&apos;ve recorded your order and will follow up by email.
         </p>
       )}
 
-      <div className="mt-10 flex flex-wrap justify-center gap-3">
-        <Link
-          href="/shop"
-          className="rounded-md bg-accent px-7 py-3.5 text-sm font-semibold text-accent-contrast transition-colors hover:bg-accent-strong"
-        >
+      <div className="mt-16 flex flex-wrap justify-center gap-4">
+        <Link href="/shop" className="btn btn-primary">
           Keep shopping
         </Link>
         <a
           href={`mailto:${config.brand.email}${
             reference ? `?subject=Order ${encodeURIComponent(reference)}` : ""
           }`}
-          className="rounded-md border border-border px-7 py-3.5 text-sm font-semibold transition-colors hover:border-muted"
+          className="btn btn-ghost"
         >
           Contact us
         </a>

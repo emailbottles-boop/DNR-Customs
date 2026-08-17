@@ -61,6 +61,17 @@ order, never *what it costs*.
 is never printed and never billed. That makes a bug in checkout free rather than
 expensive. Flip `PRINTFUL_AUTO_CONFIRM=true` only once payment capture is live.
 
+## Design
+
+The storefront has an editorial, high-fashion identity: a warm ivory ground,
+near-black ink, Cormorant Garamond for statement type and Jost for everything
+functional, square corners and hairline rules throughout. There is no chromatic
+accent — the garments are the only saturated thing on the page.
+
+**[`DESIGN.md`](./DESIGN.md) is the source of truth.** It lists the tokens, the
+component classes (`.display`, `.label`, `.btn`, `.swatch`, `.field-input`), and
+the house rules. Read it before adding a page so the system stays coherent.
+
 ## Connecting Printful
 
 1. In Printful: **Settings → Developers → Add token**. Grant read access to
@@ -68,6 +79,21 @@ expensive. Flip `PRINTFUL_AUTO_CONFIRM=true` only once payment capture is live.
 2. Put it in `.env.local` as `PRINTFUL_API_KEY`.
 3. If the token is account-level rather than store-level, also set
    `PRINTFUL_STORE_ID`.
+4. Check it worked:
+
+   ```bash
+   npm run printful:check
+   ```
+
+   This makes read-only requests and prints, per product, the URL it will get,
+   its price range, and the sizes and colours parsed from each variant. It flags
+   anything that won't appear in the shop (usually a product with no retail
+   price set) and any variant whose option names it couldn't read.
+
+   That last check matters: Printful reports variant options as unlabelled text
+   (`"Black / L"`), so the storefront infers which token is the size. If the
+   script reports unparsed variants, add the missing size token to `SIZE_TOKENS`
+   in `src/lib/printful/catalog.ts`.
 
 Products appear automatically — anything published in your Printful store shows
 up in the shop. The catalog is cached for 5 minutes.
@@ -91,12 +117,13 @@ confirmation — safe, but manual. `STRIPE_WEBHOOK_SECRET` is reserved for it.
 ## Commands
 
 ```bash
-npm run dev        # dev server
-npm run build      # production build
-npm start          # serve the production build
-npm test           # unit tests (vitest)
-npm run typecheck  # tsc --noEmit
-npm run lint       # eslint
+npm run dev             # dev server
+npm run build           # production build
+npm start               # serve the production build
+npm test                # unit tests (vitest)
+npm run typecheck       # tsc --noEmit
+npm run lint            # eslint
+npm run printful:check  # verify the Printful connection and catalog mapping
 ```
 
 ## Tests

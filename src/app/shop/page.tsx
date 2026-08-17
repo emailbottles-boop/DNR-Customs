@@ -11,30 +11,33 @@ export default async function ShopPage() {
   const products = await listProducts();
 
   return (
-    <div className="mx-auto max-w-6xl px-5 py-14">
-      <p className="eyebrow">The line</p>
-      <h1 className="display mt-2 text-4xl sm:text-5xl">Shop</h1>
-      <p className="mt-4 max-w-lg text-sm leading-relaxed text-muted">
-        {products.length} {products.length === 1 ? "piece" : "pieces"} available.
-        Everything is printed to order and ships in 2–7 business days.
-      </p>
+    <div className="mx-auto max-w-6xl px-6 sm:px-10">
+      <header className="border-b border-rule py-24 sm:py-32">
+        <p className="label">The line</p>
+        <h1 className="display mt-6 text-6xl sm:text-7xl lg:text-8xl">Shop</h1>
+        <p className="prose-editorial mt-10 text-sm">
+          {products.length} {products.length === 1 ? "piece" : "pieces"}{" "}
+          available. Everything is printed to order and ships in 2–7 business
+          days.
+        </p>
+      </header>
 
       {products.length === 0 ? (
-        <div className="mt-14 rounded-lg border border-border bg-surface p-10 text-center">
-          <p className="text-sm font-medium">Nothing in the shop yet</p>
-          <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-muted">
+        <div className="border-b border-rule py-32 text-center">
+          <p className="label">Nothing in the shop yet</p>
+          <p className="prose-editorial mx-auto mt-6 text-sm">
             Products sync automatically from Printful. Add and publish a product
             there and it will appear here within a few minutes.
           </p>
         </div>
       ) : (
-        <div className="mt-10 grid grid-cols-1 gap-x-5 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 items-start gap-x-12 gap-y-24 py-20 sm:grid-cols-2 sm:gap-x-16 sm:py-28 lg:gap-x-24 lg:gap-y-32">
           {products.map((product, index) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              priority={index < 3}
-            />
+            // The second column is dropped a beat so the grid reads as a
+            // spread rather than a table of thumbnails.
+            <div key={product.id} className={index % 2 === 1 ? "sm:mt-28" : ""}>
+              <ProductCard product={product} priority={index < 2} />
+            </div>
           ))}
         </div>
       )}
