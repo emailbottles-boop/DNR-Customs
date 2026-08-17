@@ -37,9 +37,13 @@ export default async function ConfirmedPage({
           {instructions}
         </p>
       ) : stripeSession ? (
+        {/*
+          Deliberately does not promise a receipt email: Stripe only sends one
+          when "successful payment" emails are switched on in the dashboard, and
+          promising mail that never arrives is how support tickets start.
+        */}
         <p className="mx-auto mt-6 max-w-md text-sm leading-relaxed text-ink-soft">
-          Payment received. We&apos;ve emailed your receipt, and your order goes
-          into production shortly.
+          Payment received. Your order goes into production shortly.
         </p>
       ) : (
         <p className="mx-auto mt-6 max-w-md text-sm leading-relaxed text-ink-soft">
