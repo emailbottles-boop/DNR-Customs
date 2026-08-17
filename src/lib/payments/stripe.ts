@@ -114,14 +114,21 @@ export const stripeProvider: PaymentProvider = {
       ];
     }
 
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${secretKey}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+      // Makes a retried request safe: Stripe returns the original session.
+      "Idempotency-Key": request.reference,
+    };
+
+    // Omitted unless pinned, in which case Stripe uses the account default.
+    if (config.payments.stripeApiVersion) {
+      headers["Stripe-Version"] = config.payments.stripeApiVersion;
+    }
+
     const response = await fetch(STRIPE_API, {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${secretKey}`,
-        "Content-Type": "application/x-www-form-urlencoded",
-        // Makes a retried request safe: Stripe returns the original session.
-        "Idempotency-Key": request.reference,
-      },
+      headers,
       body: encodeForm(payload).toString(),
       signal: AbortSignal.timeout(15_000),
     });

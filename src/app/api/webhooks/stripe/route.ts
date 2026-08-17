@@ -33,6 +33,12 @@ type StripeEvent = {
   data?: { object?: CheckoutSession };
 };
 
+/** Events that mean the customer has actually paid. */
+const CONFIRMING_EVENTS = new Set([
+  "checkout.session.completed",
+  "checkout.session.async_payment_succeeded",
+]);
+
 export async function POST(request: Request) {
   const secret = config.payments.stripeWebhookSecret;
 
@@ -70,8 +76,25 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Malformed payload." }, { status: 400 });
   }
 
-  // Signed but uninteresting: acknowledge so Stripe stops sending it.
-  if (event.type !== "checkout.session.completed") {
+  // A delayed payment method fails long after the session completed. Nothing to
+  // confirm — the draft simply stays a draft.
+  if (event.type === "checkout.session.async_payment_failed") {
+    const failed = event.data?.object ?? {};
+    console.warn(
+      `[webhooks/stripe] payment failed for ${
+        failed.client_reference_id ?? failed.metadata?.order_reference ?? "?"
+      }; order left as a draft.`,
+    );
+    return NextResponse.json({ received: true, confirmed: false });
+  }
+
+  // Both of these mean "the money is in". `completed` covers cards, which
+  // settle immediately. `async_payment_succeeded` covers slower methods —
+  // bank debits and the like — whose session completes while the payment is
+  // still pending and only clears minutes or days later. Listening for
+  // `completed` alone would leave those orders unconfirmed forever.
+  if (!CONFIRMING_EVENTS.has(event.type ?? "")) {
+    // Signed but uninteresting: acknowledge so Stripe stops sending it.
     return NextResponse.json({ received: true, ignored: event.type });
   }
 
@@ -87,10 +110,11 @@ export async function POST(request: Request) {
   }
 
   // Async payment methods complete the session before the money settles.
-  // Confirming then would put an unpaid order into production.
+  // Confirming then would put an unpaid order into production; the matching
+  // async_payment_succeeded event arrives once it clears and confirms it then.
   if (session.payment_status && session.payment_status !== "paid") {
     console.info(
-      `[webhooks/stripe] ${reference} not yet paid (${session.payment_status}); leaving as draft.`,
+      `[webhooks/stripe] ${reference} not yet paid (${session.payment_status}); leaving as draft until payment clears.`,
     );
     return NextResponse.json({ received: true, confirmed: false });
   }

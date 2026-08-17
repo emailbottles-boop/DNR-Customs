@@ -60,6 +60,12 @@ export const config = {
     stripeSecretKey: stripeSecret,
     stripePublishableKey: optional("STRIPE_PUBLISHABLE_KEY"),
     stripeWebhookSecret: optional("STRIPE_WEBHOOK_SECRET"),
+    /**
+     * Pins the Stripe API version for outgoing calls. Unset means Stripe uses
+     * the account's default, which Stripe can move — pinning makes upgrades a
+     * deliberate act rather than something that happens to you mid-trade.
+     */
+    stripeApiVersion: optional("STRIPE_API_VERSION"),
   },
 
   /**
