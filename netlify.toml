@@ -1,0 +1,36 @@
+# Netlify configuration.
+#
+# Netlify detects Next.js on its own and provisions the current adapter, which
+# turns the App Router pages into server-rendered functions and each route under
+# src/app/api into a serverless function — including the Stripe webhook. So this
+# file only pins the things worth pinning.
+#
+# Environment variables are NOT set here. They are set in the Netlify UI under
+# Site configuration → Environment variables, so secrets never enter the repo.
+# See "Deploying to Netlify" in the README for which ones are needed.
+
+[build]
+  command = "npm run build"
+
+[build.environment]
+  # Next 16 and React 19 need Node 20 or newer. Netlify's default has moved
+  # before now; pinning means a platform default change can't break a build
+  # that was working the day before.
+  NODE_VERSION = "20"
+
+# Long-lived caching for the build's fingerprinted assets. Their filenames
+# change whenever the contents do, so they can be cached indefinitely.
+[[headers]]
+  for = "/_next/static/*"
+  [headers.values]
+    cache-control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    # Modest hardening. No CSP here: the app loads its own fonts and inlines
+    # SVG product placeholders as data URIs, and a wrong policy would break
+    # the shop silently rather than loudly.
+    x-content-type-options = "nosniff"
+    referrer-policy = "strict-origin-when-cross-origin"
+    x-frame-options = "SAMEORIGIN"

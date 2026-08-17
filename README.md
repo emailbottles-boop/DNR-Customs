@@ -183,6 +183,40 @@ curl -X POST localhost:3000/api/shipping \
   -d '{"recipient":{"name":"Test","email":"t@example.com","address1":"12 Mill Lane","city":"Portland","state_code":"OR","country_code":"US","zip":"97201"},"items":[{"variantId":-101,"quantity":2}]}'
 ```
 
+## Deploying to Netlify
+
+The simplest option, and free: Netlify's free tier permits commercial use and
+needs no card. It detects Next.js automatically and turns the App Router pages
+and every route under `src/app/api` — the Stripe webhook included — into
+serverless functions. `netlify.toml` only pins the Node version and caching.
+
+1. Sign up at netlify.com with your GitHub account.
+2. **Add new site → Import an existing project**, pick this repo, branch `main`.
+   Leave the build settings alone; the detected values are right.
+3. Before the first deploy finishes, add the environment variables under
+   **Site configuration → Environment variables**:
+
+   | Variable | Value |
+   | --- | --- |
+   | `PRINTFUL_API_KEY` | your Printful token |
+   | `PRINTFUL_STORE_ID` | only if the token is account-level |
+   | `STRIPE_SECRET_KEY` | `sk_test_…` first, `sk_live_…` when going live |
+   | `STRIPE_WEBHOOK_SECRET` | from the Stripe dashboard endpoint, not `stripe listen` |
+   | `NEXT_PUBLIC_SITE_URL` | the real site URL, e.g. `https://dnrcustoms.netlify.app` |
+   | `CONTACT_EMAIL` | your address |
+
+   Netlify exposes these at build time as well as runtime, which matters:
+   the shop prerenders its product pages, so a build without
+   `PRINTFUL_API_KEY` silently ships the demo catalog.
+
+4. Trigger a redeploy so the build picks up the variables.
+5. In Stripe, add a webhook endpoint at
+   `https://your-site/api/webhooks/stripe` for `checkout.session.completed`,
+   and put its signing secret into `STRIPE_WEBHOOK_SECRET`.
+
+Free tier limits are 100 GB bandwidth and 300 build minutes a month — far
+beyond a new shop. Every push to `main` redeploys.
+
 ## Deploying to Firebase
 
 Use **Firebase App Hosting**, not plain Firebase Hosting. Hosting serves static
