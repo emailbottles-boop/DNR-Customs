@@ -119,6 +119,22 @@ export async function POST(request: Request) {
     return NextResponse.json({ received: true, confirmed: false });
   }
 
+  /**
+   * Test payments must never reach production.
+   *
+   * Stripe has a test mode; Printful does not. Its API is always live — it
+   * prints and bills for real regardless of what the payment side was doing.
+   * Confirming here on a test payment would mean a real garment made and a
+   * real card charged for money that never existed. The draft is left in
+   * place so the rest of the flow is still genuinely exercised.
+   */
+  if (config.payments.stripeTestMode) {
+    console.warn(
+      `[webhooks/stripe] TEST MODE — not confirming ${reference}. The Printful draft exists and can be confirmed by hand, but nothing has been printed or billed.`,
+    );
+    return NextResponse.json({ received: true, confirmed: false, testMode: true });
+  }
+
   try {
     const outcome = await confirmOrderByReference(reference);
 

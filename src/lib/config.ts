@@ -66,6 +66,15 @@ export const config = {
      * deliberate act rather than something that happens to you mid-trade.
      */
     stripeApiVersion: optional("STRIPE_API_VERSION"),
+    /**
+     * True while Stripe is on test keys, where no real money moves.
+     *
+     * Printful has no such mode: its API is always live, always prints, always
+     * bills. So a test payment against a real Printful token would produce a
+     * genuine garment and a genuine charge. This flag exists to stop that —
+     * see the webhook, which refuses to confirm orders while it is set.
+     */
+    stripeTestMode: stripeSecret?.startsWith("sk_test_") ?? false,
   },
 
   /**
