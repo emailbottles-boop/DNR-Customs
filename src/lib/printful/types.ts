@@ -26,6 +26,18 @@ export const envelope = z.object({
     .optional(),
 });
 
+/**
+ * A decimal money value from Printful, which is inconsistent about the type.
+ *
+ * Retail prices on products come back as strings ("29.50"); costs on an order
+ * come back as JSON numbers (29.5). Both are accepted here and normalised by
+ * `parseDecimal`, which takes either. Insisting on one shape made order
+ * creation fail *after* Printful had already accepted the order — the worst
+ * place to be strict, since the write had succeeded and only the reply was
+ * rejected.
+ */
+export const decimalValue = z.union([z.string(), z.number()]);
+
 /** Error responses use the same envelope with a string/object result. */
 export const errorEnvelope = z.object({
   code: z.number(),
@@ -63,8 +75,8 @@ export const syncVariant = z.object({
   name: z.string(),
   synced: z.boolean().optional(),
   variant_id: z.number().optional(),
-  /** Decimal string, e.g. "29.50". Parsed via `parseDecimal`. */
-  retail_price: z.string().nullish(),
+  /** Decimal, e.g. "29.50" or 29.5. Parsed via `parseDecimal`. */
+  retail_price: decimalValue.nullish(),
   currency: z.string().nullish(),
   availability_status: z.string().nullish(),
   files: z
@@ -100,20 +112,18 @@ export const syncProductDetail = z.object({
 export const shippingRate = z.object({
   id: z.string(),
   name: z.string(),
-  rate: z.string(),
+  rate: decimalValue,
   currency: z.string(),
   minDeliveryDays: z.number().nullish(),
   maxDeliveryDays: z.number().nullish(),
 });
 
-export const orderCosts = z.object({
-  currency: z.string().nullish(),
-  subtotal: z.string().nullish(),
-  shipping: z.string().nullish(),
-  tax: z.string().nullish(),
-  vat: z.string().nullish(),
-  total: z.string().nullish(),
-});
+/**
+ * Order cost breakdown. Deliberately unvalidated: nothing in the storefront
+ * reads it, and every field we describe here is another way for a *successful*
+ * order to be reported as a failure. Validate what you consume.
+ */
+export const orderCosts = z.unknown();
 
 export const order = z.object({
   id: z.number(),
@@ -123,6 +133,7 @@ export const order = z.object({
   created: z.number().nullish(),
   costs: orderCosts.nullish(),
   retail_costs: orderCosts.nullish(),
+  // Anything else Printful sends is ignored rather than rejected.
 });
 
 export type SyncProductSummary = z.infer<typeof syncProductSummary>;
