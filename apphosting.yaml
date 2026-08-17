@@ -1,0 +1,77 @@
+# Firebase App Hosting configuration.
+#
+# App Hosting builds this repo with Cloud Build and serves it from Cloud Run,
+# so the Next.js server, the API routes, and the Stripe webhook all run for
+# real. (Firebase Hosting on its own is static-only and cannot serve this app.)
+#
+# Deployment steps and the secret-creation commands are in the README under
+# "Deploying to Firebase".
+
+runConfig:
+  # Scale to zero when idle — a new store has long quiet stretches and this is
+  # the difference between paying for traffic and paying for uptime.
+  minInstances: 0
+  # A ceiling, so a traffic spike or a runaway loop can't run up a bill.
+  maxInstances: 4
+  concurrency: 80
+  cpu: 1
+  memoryMiB: 512
+
+env:
+  # ---------------------------------------------------------------------------
+  # Plain configuration. Not secret — safe to read in this file.
+  # ---------------------------------------------------------------------------
+
+  # Must be the real public origin. Payment redirect URLs are built from it, so
+  # a wrong value sends paying customers to a 404. Needed at BUILD as well
+  # because page metadata (metadataBase) is resolved while prerendering.
+  - variable: NEXT_PUBLIC_SITE_URL
+    value: https://dnrcustoms.web.app
+    availability:
+      - BUILD
+      - RUNTIME
+
+  # Rendered into the footer at build time and used in order emails at runtime.
+  - variable: CONTACT_EMAIL
+    value: hello@dnrcustoms.com
+    availability:
+      - BUILD
+      - RUNTIME
+
+  # ---------------------------------------------------------------------------
+  # Secrets. These live in Cloud Secret Manager; only the secret's *name*
+  # appears here, never its value. Create them with:
+  #   firebase apphosting:secrets:set <name>
+  # ---------------------------------------------------------------------------
+
+  # Needed at BUILD, not just RUNTIME. The shop prerenders its product pages
+  # via generateStaticParams, so a build without this token would bake the
+  # built-in demo catalog into the live site and serve fake products.
+  - variable: PRINTFUL_API_KEY
+    secret: printfulApiKey
+    availability:
+      - BUILD
+      - RUNTIME
+
+  # Only required if the Printful token is account-level rather than
+  # store-level. Delete this entry if yours is store-level.
+  - variable: PRINTFUL_STORE_ID
+    secret: printfulStoreId
+    availability:
+      - BUILD
+      - RUNTIME
+
+  # Runtime only — checkout and the webhook are the sole consumers, and nothing
+  # renders payment configuration at build time. Keeping payment credentials
+  # out of the build environment narrows where they can leak from.
+  - variable: STRIPE_SECRET_KEY
+    secret: stripeSecretKey
+    availability:
+      - RUNTIME
+
+  # Verifies that webhook calls genuinely came from Stripe. Without it the
+  # webhook refuses every request, so live orders would never leave draft.
+  - variable: STRIPE_WEBHOOK_SECRET
+    secret: stripeWebhookSecret
+    availability:
+      - RUNTIME

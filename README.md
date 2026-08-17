@@ -183,10 +183,70 @@ curl -X POST localhost:3000/api/shipping \
   -d '{"recipient":{"name":"Test","email":"t@example.com","address1":"12 Mill Lane","city":"Portland","state_code":"OR","country_code":"US","zip":"97201"},"items":[{"variantId":-101,"quantity":2}]}'
 ```
 
-## Deploying
+## Deploying to Firebase
 
-Any Node host works. On Vercel, import the repo and add the environment
-variables from `.env.example`; no other configuration is needed.
+Use **Firebase App Hosting**, not plain Firebase Hosting. Hosting serves static
+files only; this app needs a server for its API routes and the Stripe webhook,
+and needs somewhere to keep the Printful and Stripe keys that must never reach
+a browser. App Hosting builds the repo with Cloud Build and serves it on Cloud
+Run, so all of that works.
 
-Set `NEXT_PUBLIC_SITE_URL` to the real public origin — payment redirects are
-built from it, so a wrong value sends customers to a 404 after paying.
+Requires the **Blaze** (pay-as-you-go) billing plan. Resource limits are capped
+in `apphosting.yaml` (`maxInstances: 4`, scale to zero when idle) so a traffic
+spike can't run up an unbounded bill.
+
+**1. Create the backend.**
+
+```bash
+npm install -g firebase-tools
+firebase login
+firebase init apphosting     # connect this GitHub repo, pick a region, branch: main
+```
+
+**2. Store the secrets.** Values go into Cloud Secret Manager, never into the
+repo. The names must match the `secret:` entries in `apphosting.yaml`.
+
+```bash
+firebase apphosting:secrets:set printfulApiKey
+firebase apphosting:secrets:set printfulStoreId      # skip if store-level token
+firebase apphosting:secrets:set stripeSecretKey
+firebase apphosting:secrets:set stripeWebhookSecret
+```
+
+The CLI offers to grant the backend access to each secret as it is created; say
+yes. If you skip it, grant access after the fact:
+
+```bash
+firebase apphosting:secrets:grantaccess printfulApiKey --backend <backend-id>
+```
+
+**3. Set your real domain.** Edit `NEXT_PUBLIC_SITE_URL` in `apphosting.yaml`
+to the origin the site is actually served from. Payment redirects are built
+from it, so a wrong value sends paying customers to a 404.
+
+**4. Deploy** by pushing to `main`. App Hosting builds every push to the branch
+you connected.
+
+**5. Point Stripe at the deployed URL.** In the Stripe dashboard add a webhook
+endpoint at `https://your-domain/api/webhooks/stripe` for
+`checkout.session.completed`, then put *that* endpoint's signing secret into
+the `stripeWebhookSecret` secret. It differs from the one `stripe listen` gives
+you locally.
+
+### Why PRINTFUL_API_KEY is a build-time secret
+
+Note its `availability` in `apphosting.yaml`: `BUILD` **and** `RUNTIME`.
+
+The shop prerenders its product pages through `generateStaticParams`, which
+reads the catalog at build time. Without the token during the build, the app
+falls back to its demo catalog and bakes four fake products into the live site.
+It won't error — it will just quietly ship the wrong shop.
+
+The Stripe secrets are `RUNTIME` only, since nothing renders payment config at
+build time and there's no reason to expose payment credentials to the builder.
+
+### Other hosts
+
+Any Node host works — `npm run build && npm start`. Vercel, Railway, Render,
+and Cloudflare Workers all run this. Whatever you choose, set the same
+environment variables listed in `.env.example`.
