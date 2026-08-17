@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond, Jost } from "next/font/google";
+import { Archivo, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
@@ -7,22 +7,22 @@ import { config } from "@/lib/config";
 import { isDemoCatalog } from "@/lib/printful/store";
 
 /**
- * An editorial pairing: a high-contrast serif carries the statement headlines,
- * a geometric grotesque handles everything functional. Light weights only —
- * the display face is set large, where heavy weights read as shouting.
+ * A grotesk and a mono. Archivo carries the shouting — heavy, uppercase, packed
+ * tight — while Plex Mono handles anything technical: sizes, order references,
+ * section marks. That split is what keeps this from reading as a generic dark
+ * theme; the mono is the streetwear tell.
  */
-const cormorant = Cormorant_Garamond({
-  variable: "--font-cormorant",
+const archivo = Archivo({
+  variable: "--font-archivo",
   subsets: ["latin"],
-  weight: ["300", "400", "500"],
-  style: ["normal", "italic"],
+  weight: ["400", "500", "600", "700", "800"],
   display: "swap",
 });
 
-const jost = Jost({
-  variable: "--font-jost",
+const plexMono = IBM_Plex_Mono({
+  variable: "--font-plex-mono",
   subsets: ["latin"],
-  weight: ["300", "400", "500"],
+  weight: ["400", "500"],
   display: "swap",
 });
 
@@ -44,7 +44,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${cormorant.variable} ${jost.variable} h-full antialiased`}
+      className={`${archivo.variable} ${plexMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
         <SiteHeader />

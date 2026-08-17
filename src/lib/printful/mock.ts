@@ -5,10 +5,12 @@ import type { ShippingRate } from "./types";
 /**
  * Demo catalog used when PRINTFUL_API_KEY is absent.
  *
- * Shaped to mirror the real DNR Customs line so the storefront looks like
- * itself before credentials are added. Product ids are negative, which makes it
- * impossible to confuse a demo id with a real Printful sync id and guarantees a
- * stray demo order can never match a live variant.
+ * Deliberately a single product, because the live shop is a single product:
+ * Drop 01. A demo with four items would let a grid layout look fine locally and
+ * break in production, which is the failure this fixture exists to prevent.
+ *
+ * Ids are negative, so a demo id can never be confused with a real Printful
+ * sync id and a stray demo order can never match a live variant.
  */
 
 const SIZES = ["S", "M", "L", "XL", "2XL"] as const;
@@ -43,18 +45,18 @@ function buildVariants(
 }
 
 /**
- * Inline SVG placeholder — no external image host and no network at build time.
+ * Inline SVG placeholder — no external image host, no network at build time.
  *
- * Deliberately quiet: a paper-toned field with the colourway named in small
- * tracked capitals, so the demo reads as editorial rather than as a broken
- * image. Real photography replaces these the moment Printful is connected.
+ * Dark field with the colourway named in tracked capitals, so the demo reads as
+ * part of the storefront rather than as a broken image. Printful's real mockups
+ * replace these the moment a token is configured.
  */
 function placeholder(garment: string, label: string): string {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1200" viewBox="0 0 900 1200">
-<rect width="900" height="1200" fill="#efece4"/>
-<rect x="250" y="230" width="400" height="640" fill="${garment}"/>
-<text x="450" y="965" font-family="Jost, Futura, system-ui, sans-serif" font-size="21" letter-spacing="4.6" fill="#14120f" text-anchor="middle">${label.toUpperCase()}</text>
-<text x="450" y="1002" font-family="Jost, Futura, system-ui, sans-serif" font-size="14" letter-spacing="3.4" fill="#9c968b" text-anchor="middle">DNR CUSTOMS</text>
+<rect width="900" height="1200" fill="#1a181e"/>
+<rect x="250" y="220" width="400" height="660" fill="${garment}"/>
+<text x="450" y="972" font-family="Archivo, Helvetica, sans-serif" font-size="22" font-weight="700" letter-spacing="5" fill="#edeae3" text-anchor="middle">${label.toUpperCase()}</text>
+<text x="450" y="1012" font-family="monospace" font-size="14" letter-spacing="4" fill="#5f5b55" text-anchor="middle">DROP 01</text>
 </svg>`;
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }
@@ -62,81 +64,24 @@ function placeholder(garment: string, label: string): string {
 export const MOCK_PRODUCTS: Product[] = [
   {
     id: -1,
-    slug: "long-sleeve-shirt",
-    name: "Long Sleeve Shirt",
+    slug: "drop-01-long-sleeve",
+    name: "Drop 01 Long Sleeve",
     description:
-      "A relaxed long sleeve cut in mid-weight cotton jersey, with set-in sleeves and a ribbed collar that holds its shape. Printed to order, one at a time.",
+      "Mid-weight cotton jersey, relaxed through the body, set-in sleeves and a ribbed collar that holds its shape. Printed to order, one at a time.",
     thumbnail: placeholder("#20222a", "Midnight"),
     images: [placeholder("#20222a", "Midnight")],
-    variants: buildVariants(-1, 4200, [
-      { name: "Midnight", swatch: "#20222a" },
-      { name: "Bone", swatch: "#e4dfd4" },
-      { name: "Clay", swatch: "#9d7a63" },
-    ]),
-  },
-  {
-    id: -2,
-    slug: "heavyweight-tee",
-    name: "Heavyweight Tee",
-    description:
-      "220gsm combed cotton with a boxy body and a wide-set neck rib. The staple the rest of the line is drawn around.",
-    thumbnail: placeholder("#e4dfd4", "Bone"),
-    images: [placeholder("#e4dfd4", "Bone")],
     variants: buildVariants(
-      -2,
-      3800,
+      -1,
+      4200,
       [
+        { name: "Midnight", swatch: "#20222a" },
         { name: "Bone", swatch: "#e4dfd4" },
-        { name: "Black", swatch: "#171614" },
-        { name: "Sage", swatch: "#7c8271" },
+        { name: "Clay", swatch: "#9d7a63" },
       ],
-      // A realistic gap: the picker must handle a missing colour/size pair.
-      [["Sage", "2XL"]],
+      // A realistic gap: the picker must handle a colour/size pair that
+      // simply is not made.
+      [["Clay", "2XL"]],
     ),
-  },
-  {
-    id: -3,
-    slug: "embroidered-hoodie",
-    name: "Embroidered Hoodie",
-    description:
-      "Heavy brushed fleece with a stitched chest mark, double-lined hood and ribbed cuffs. Cut long in the body.",
-    thumbnail: placeholder("#2f3138", "Charcoal"),
-    images: [placeholder("#2f3138", "Charcoal")],
-    variants: buildVariants(-3, 7400, [
-      { name: "Charcoal", swatch: "#2f3138" },
-      { name: "Sand", swatch: "#c9b79c" },
-    ]),
-  },
-  {
-    id: -4,
-    slug: "six-panel-cap",
-    name: "Six-Panel Cap",
-    description:
-      "Unstructured cotton twill cap with an adjustable strap back. One size.",
-    thumbnail: placeholder("#3d4438", "Olive"),
-    images: [placeholder("#3d4438", "Olive")],
-    variants: [
-      {
-        id: -401,
-        catalogVariantId: null,
-        name: "Olive / One Size",
-        size: "One Size",
-        color: "Olive",
-        price: money(3200),
-        image: placeholder("#3d4438", "Olive"),
-        available: true,
-      },
-      {
-        id: -402,
-        catalogVariantId: null,
-        name: "Black / One Size",
-        size: "One Size",
-        color: "Black",
-        price: money(3200),
-        image: placeholder("#171614", "Black"),
-        available: true,
-      },
-    ],
   },
 ];
 

@@ -197,7 +197,7 @@ export default function CheckoutPage() {
 
   if (!ready) {
     return (
-      <div className="mx-auto max-w-4xl px-5 py-24">
+      <div className="mx-auto max-w-5xl px-6 py-32 sm:px-10">
         <p className="label">Loading…</p>
       </div>
     );
@@ -205,13 +205,17 @@ export default function CheckoutPage() {
 
   if (cart.lines.length === 0) {
     return (
-      <div className="mx-auto max-w-2xl px-5 py-32 text-center">
-        <p className="label">Checkout</p>
-        <h1 className="display mt-6 text-5xl sm:text-6xl">
-          Nothing to check out
+      <div className="mx-auto max-w-3xl px-6 py-36 text-center sm:px-10">
+        <p className="label">Checkout — empty</p>
+        <h1 className="display mt-8 text-6xl sm:text-8xl">
+          Nothing to
+          <br />
+          check out
         </h1>
-        <p className="mt-8 text-sm text-ink-soft">Your cart is empty.</p>
-        <Link href="/shop" className="btn btn-primary mt-12">
+        <p className="prose-body mx-auto mt-10 text-sm">
+          Your cart is empty. Pick something from the line first.
+        </p>
+        <Link href="/shop" className="btn btn-primary mt-14">
           Browse the shop
         </Link>
       </div>
@@ -221,11 +225,13 @@ export default function CheckoutPage() {
   const grandTotal = shipping ? total.amount + shipping.rate.amount : total.amount;
 
   return (
-    <div className="mx-auto max-w-5xl px-5 py-24">
-      <p className="label">Step 2 of 2</p>
-      <h1 className="display mt-5 text-6xl sm:text-7xl">Checkout</h1>
+    <div className="mx-auto max-w-5xl px-6 sm:px-10">
+      <header className="border-b border-hairline py-24 sm:py-28">
+        <p className="label">Step 2 of 2</p>
+        <h1 className="display mt-6 text-7xl sm:text-8xl">Checkout</h1>
+      </header>
 
-      <div className="mt-20 grid gap-16 lg:grid-cols-[1fr_320px] lg:gap-24">
+      <div className="grid gap-16 py-16 lg:grid-cols-[1fr_320px] lg:gap-24 lg:py-20">
         <form
           className="space-y-8"
           onSubmit={(event) => {
@@ -234,7 +240,9 @@ export default function CheckoutPage() {
             else void handleQuote();
           }}
         >
-          <h2 className="label border-b border-rule pb-4">Delivery address</h2>
+          <h2 className="label border-b border-hairline pb-4 text-bone">
+            01 — Delivery address
+          </h2>
 
           <Field
             label="Full name"
@@ -319,13 +327,15 @@ export default function CheckoutPage() {
           />
 
           {options ? (
-            <fieldset className="pt-8">
-              <legend className="label">Shipping method</legend>
-              <div className="mt-6 border-t border-rule">
+            <fieldset className="pt-10">
+              <legend className="label border-b border-hairline pb-4 text-bone">
+                02 — Shipping method
+              </legend>
+              <div className="mt-6">
                 {options.map((option) => (
                   <label
                     key={option.id}
-                    className="flex cursor-pointer items-center justify-between gap-6 border-b border-rule py-5"
+                    className="flex cursor-pointer items-center justify-between gap-6 border-b border-hairline py-5 transition-colors hover:border-hairline-lit"
                   >
                     <span className="flex items-center gap-4">
                       <input
@@ -334,25 +344,25 @@ export default function CheckoutPage() {
                         value={option.id}
                         checked={shipping?.id === option.id}
                         onChange={() => setChosenShippingId(option.id)}
-                        className="accent-ink"
+                        className="accent-bone"
                       />
                       <span
                         className={`text-sm transition-colors ${
                           shipping?.id === option.id
-                            ? "text-ink"
-                            : "text-ink-soft"
+                            ? "text-bone"
+                            : "text-bone-soft"
                         }`}
                       >
                         {option.name}
                         {option.minDeliveryDays && option.maxDeliveryDays ? (
-                          <span className="mt-1 block text-xs text-ink-faint">
+                          <span className="label mt-2 block">
                             {option.minDeliveryDays}–{option.maxDeliveryDays}{" "}
                             business days
                           </span>
                         ) : null}
                       </span>
                     </span>
-                    <span className="text-sm whitespace-nowrap">
+                    <span className="font-mono text-sm whitespace-nowrap tabular-nums text-bone">
                       {option.rate.formatted}
                     </span>
                   </label>
@@ -364,7 +374,7 @@ export default function CheckoutPage() {
           {error ? (
             <p
               role="alert"
-              className="border-l border-alert py-1 pl-4 text-sm text-alert"
+              className="border-l-2 border-alert bg-surface px-4 py-3 text-sm text-alert"
             >
               {error}
             </p>

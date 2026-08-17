@@ -14,23 +14,23 @@ export function SiteHeader() {
   const pathname = usePathname();
 
   return (
-    <header className="sticky top-0 z-50 border-b border-rule bg-paper/85 backdrop-blur">
+    <header className="sticky top-0 z-50 border-b border-hairline bg-ground/90 backdrop-blur">
       {/*
-        Masthead: an empty first column on wide screens lets the wordmark sit
-        dead centre while navigation stays flush right. Below `sm` the columns
-        collapse to wordmark-left so the row never runs out of room.
+        A compact technical bar: logotype flush left, mono nav flush right.
+        Nothing here takes the signal colour — the chrome stays behind the
+        product, and the accent belongs to the page's primary action.
       */}
-      <div className="mx-auto grid h-20 max-w-6xl grid-cols-[1fr_auto] items-center gap-5 px-5 sm:h-24 sm:grid-cols-[1fr_auto_1fr] sm:gap-8">
+      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-6 px-5 sm:h-16 sm:px-8">
         <Link
           href="/"
-          className="-mr-[0.22em] text-xs uppercase tracking-[0.22em] text-ink sm:-mr-[0.36em] sm:col-start-2 sm:justify-self-center sm:text-[0.8125rem] sm:tracking-[0.36em]"
-          aria-label="DNR Customs — home"
+          className="display text-lg text-bone transition-colors duration-200 hover:text-bone-soft sm:text-xl"
+          aria-label="D&amp;R Customs — home"
         >
-          DNR Customs
+          D&amp;R Customs
         </Link>
 
         <nav
-          className="flex items-center gap-4 justify-self-end sm:col-start-3 sm:gap-8"
+          className="flex items-center gap-5 sm:gap-8"
           aria-label="Main"
         >
           {NAV.map((item) => {
@@ -40,8 +40,8 @@ export function SiteHeader() {
                 key={item.href}
                 href={item.href}
                 aria-current={active ? "page" : undefined}
-                className={`label link-rule transition-colors duration-300 hover:text-ink ${
-                  active ? "text-ink" : ""
+                className={`label link-rule transition-colors duration-200 hover:text-bone ${
+                  active ? "text-bone" : ""
                 }`}
               >
                 {item.label}
@@ -51,12 +51,12 @@ export function SiteHeader() {
 
           <Link
             href="/cart"
-            className="label link-rule transition-colors duration-300 hover:text-ink"
+            className="label link-rule transition-colors duration-200 hover:text-bone"
           >
             Cart{" "}
             {/* Suppressed until hydrated: the server can't know the count. */}
             <span
-              className={`transition-opacity duration-300 ${
+              className={`transition-opacity duration-200 ${
                 ready ? "opacity-100" : "opacity-0"
               }`}
               aria-label={ready ? `${count} items in cart` : undefined}

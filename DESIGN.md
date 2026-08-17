@@ -1,8 +1,11 @@
-# DNR Customs — design system
+# D&R Customs — design system
 
-The reference points are fashion houses and magazine spreads, not webshops.
-Restraint is the brief: emphasis comes from scale, whitespace, and typographic
-contrast — never from colour or ornament.
+Modern streetwear. Dark, typographic, technical. The reference points are
+drop pages and technical-wear labels, not general-purpose webshops.
+
+**Right now the shop carries one product, and the site is built around it as
+Drop 01.** Layouts must look deliberate with a single item, never like a grid
+waiting to be filled.
 
 ## Tokens
 
@@ -10,52 +13,66 @@ Defined in `src/app/globals.css`. Use the Tailwind names, never raw hex.
 
 | Token | Use |
 | --- | --- |
-| `bg-paper` | Page ground (warm ivory) |
-| `bg-paper-deep` | Recessed panels, image wells |
-| `bg-card` | Raised cards |
-| `text-ink` | Primary text |
-| `text-ink-soft` | Body copy, secondary text |
-| `text-ink-faint` | Disabled, metadata |
-| `border-rule` | Hairline dividers |
-| `border-rule-strong` | Interactive borders |
-| `bg-inverse` / `text-inverse-ink` | Full-bleed inverted editorial panels |
-| `text-alert` | Errors only |
+| `bg-ground` | Page ground — graphite, not flat black |
+| `bg-void` | Deeper band, for full-bleed sections |
+| `bg-surface` | Recessed wells: image fields, inputs |
+| `bg-surface-lift` | Raised chips, disabled states |
+| `text-bone` | Primary text |
+| `text-bone-soft` | Body copy, secondary |
+| `text-bone-faint` | Metadata, disabled |
+| `border-hairline` | Dividers |
+| `border-hairline-lit` | Interactive borders |
+| `text-signal` / `bg-signal` | **The one accent.** See below. |
+| `text-alert` | Validation errors only |
+
+### The signal colour
+
+`--signal` is a saturated orange. It is spent on **one primary action per view**
+and on live status (in stock, drop live). Nothing else. If two things on a
+screen are orange, one of them is wrong. Everything else earns emphasis through
+scale, weight, and whitespace.
 
 ## Type
 
-- `.display` — Cormorant Garamond, light, tight. Statement headlines only.
-  Set it **large**: `text-5xl` minimum, `text-7xl`/`text-8xl` for heroes.
-- `.editorial` — italic serif, for asides and pull quotes.
-- `.label` — uppercase, wide-tracked, 11px. Section marks, eyebrows, nav, meta.
-- `.prose-editorial` — body copy at a readable measure.
-- Default body font is Jost at weight 300. Keep body text small and quiet;
-  let the serif carry the page.
+Two families, and the split matters — it is what separates this from a generic
+dark theme.
+
+- **Archivo** carries the shouting. `.display` is weight 800, uppercase,
+  letter-spacing `-0.035em`, line-height `0.86`. Set it **large**: `text-6xl`
+  minimum for a section head, `text-8xl`/`text-9xl` for a drop hero. Packed
+  tight, filling its measure.
+- `.display-sub` is the step down — heavy, uppercase, less compressed.
+- **IBM Plex Mono** handles anything technical via `.label`: sizes, order
+  references, prices in tables, section marks, nav, buttons. Uppercase,
+  wide-tracked, 11px.
+- `.prose-body` for running copy. Keep body text quiet and small; the display
+  face does the work.
 
 ## Components
 
-Use these classes rather than rebuilding them:
+Use these rather than rebuilding them:
 
-- `.btn` + `.btn-primary` — the one primary action per view (ink block,
-  inverts on hover).
-- `.btn` + `.btn-ghost` — everything secondary (hairline border).
-- `.link-rule` — inline links; the underline draws itself on hover.
-- `.swatch` — variant selectors. Drive state with `aria-pressed`, not classes.
-- `.field-input` — form fields. A baseline rule, no box.
+- `.btn` + `.btn-primary` — the signal fill. One per view.
+- `.btn` + `.btn-ghost` — everything else.
+- `.link-rule` — inline links, underline draws on hover.
+- `.swatch` — size and colour selectors. Selected state is a **bone** fill, not
+  signal; the signal belongs to the action. Drive it with `aria-pressed`.
+- `.field-input` — form fields.
 
 ## Rules of the house
 
-1. **No rounded corners.** No `rounded-*` anywhere. Square edges throughout.
-2. **No chromatic accent.** Ink, paper, and the garments. That is the palette.
-   `text-alert` is for validation errors only.
-3. **Hairline rules, not boxes.** Prefer a single `border-t`/`border-b` over a
-   fully bordered card.
-4. **Whitespace is the layout.** Be generous: `py-24`/`py-32` for sections.
-   Crowding reads as cheap.
-5. **Uppercase + tracking for anything small.** Use `.label`.
-6. **Motion is slow and minimal.** 0.3–0.4s eases. No bounce, no scale-up
-   flourishes; a gentle image zoom on hover is the ceiling.
-7. **Images carry the page.** Give them room and let them run large; portrait
-   aspect ratios (`aspect-[3/4]`, `aspect-[4/5]`) suit garments.
+1. **No rounded corners.** No `rounded-*` anywhere.
+2. **One accent, used once per view.** See above.
+3. **Hairlines, not cards.** Prefer a single `border-t` over a bordered box.
+4. **Type is the graphic.** Oversized uppercase display, tightly tracked, is the
+   main visual device. Let headlines run big and crop close.
+5. **Mono for anything small.** Use `.label`.
+6. **Motion is fast and slight.** 0.2–0.3s. A subtle image scale on hover is the
+   ceiling. No bounce, no parallax, no scroll-jacking.
+7. **Product images carry the colour.** They sit on `bg-surface` wells in
+   portrait ratios (`aspect-[3/4]`, `aspect-[4/5]`).
+8. **Drop framing is real, not decoration.** "Drop 01" is meaningful — more will
+   follow. Numbered markers are legitimate here; elsewhere they are not.
 
 ## Non-negotiable
 

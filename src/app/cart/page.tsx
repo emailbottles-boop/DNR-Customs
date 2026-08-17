@@ -12,7 +12,7 @@ export default function CartPage() {
   // The cart lives in localStorage, so there is nothing to show until mount.
   if (!ready) {
     return (
-      <div className="mx-auto max-w-4xl px-5 py-24">
+      <div className="mx-auto max-w-5xl px-6 py-32 sm:px-10">
         <p className="label">Loading cart…</p>
       </div>
     );
@@ -20,16 +20,17 @@ export default function CartPage() {
 
   if (cart.lines.length === 0) {
     return (
-      <div className="mx-auto max-w-2xl px-5 py-32 text-center">
-        <p className="label">Cart</p>
-        <h1 className="display mt-6 text-5xl sm:text-6xl">
-          Your cart is empty
+      <div className="mx-auto max-w-3xl px-6 py-36 text-center sm:px-10">
+        <p className="label">Cart — empty</p>
+        <h1 className="display mt-8 text-6xl sm:text-8xl">
+          Nothing
+          <br />
+          selected
         </h1>
-        <p className="mx-auto mt-8 max-w-sm text-sm leading-relaxed text-ink-soft">
-          Nothing selected yet. The current line is a short one — it rewards a
-          slow look.
+        <p className="prose-body mx-auto mt-10 text-sm">
+          The current line is a short one — it rewards a slow look.
         </p>
-        <Link href="/shop" className="btn btn-primary mt-12">
+        <Link href="/shop" className="btn btn-primary mt-14">
           Browse the shop
         </Link>
       </div>
@@ -37,26 +38,29 @@ export default function CartPage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl px-5 py-24">
-      <p className="label">
-        {count} {count === 1 ? "item" : "items"}
-      </p>
-      <h1 className="display mt-5 text-6xl sm:text-7xl">Cart</h1>
+    <div className="mx-auto max-w-5xl px-6 sm:px-10">
+      <header className="border-b border-hairline py-24 sm:py-28">
+        <p className="label">
+          {count} {count === 1 ? "item" : "items"}
+        </p>
+        <h1 className="display mt-6 text-7xl sm:text-8xl">Cart</h1>
+      </header>
 
-      <ul className="mt-16 border-t border-rule">
+      <ul>
         {cart.lines.map((line) => (
           <li
             key={line.variantId}
-            className="flex gap-6 border-b border-rule py-10 sm:gap-10"
+            className="flex gap-6 border-b border-hairline py-10 sm:gap-10"
           >
             <Link
               href={`/shop/${line.slug}`}
-              className="relative aspect-[3/4] w-28 shrink-0 overflow-hidden bg-paper-deep sm:w-36"
+              className="group relative aspect-[3/4] w-28 shrink-0 overflow-hidden bg-surface sm:w-36"
             >
               <ProductImage
                 src={line.image}
                 alt={line.productName}
                 sizes="(min-width: 640px) 144px, 112px"
+                className="transition-transform duration-300 group-hover:scale-[1.03]"
               />
             </Link>
 
@@ -64,18 +68,18 @@ export default function CartPage() {
               <div className="min-w-0">
                 <Link
                   href={`/shop/${line.slug}`}
-                  className="link-rule text-base"
+                  className="display-sub link-rule text-lg sm:text-xl"
                 >
                   {line.productName}
                 </Link>
-                <p className="mt-3 text-sm text-ink-soft">{line.variantName}</p>
-                <p className="mt-1 text-sm text-ink-faint">
+                <p className="label mt-4">{line.variantName}</p>
+                <p className="mt-2 font-mono text-xs tabular-nums text-bone-faint">
                   {format(line.unitPrice)} each
                 </p>
                 <button
                   type="button"
                   onClick={() => remove(line.variantId)}
-                  className="label link-rule mt-6 inline-block"
+                  className="label link-rule mt-6 inline-block hover:text-bone"
                 >
                   Remove
                 </button>
@@ -86,12 +90,15 @@ export default function CartPage() {
                   <span className="sr-only">
                     Quantity for {line.productName} {line.variantName}
                   </span>
+                  <span aria-hidden="true" className="label">
+                    Qty
+                  </span>
                   <select
                     value={line.quantity}
                     onChange={(event) =>
                       updateQuantity(line.variantId, Number(event.target.value))
                     }
-                    className="border-b border-rule-strong bg-transparent py-2 pr-1 text-sm transition-colors focus:border-ink focus:outline-none"
+                    className="border border-hairline-lit bg-surface px-3 py-2 font-mono text-xs tabular-nums text-bone transition-colors hover:border-bone-soft"
                   >
                     {Array.from(
                       { length: MAX_QUANTITY_PER_LINE },
@@ -103,7 +110,7 @@ export default function CartPage() {
                     ))}
                   </select>
                 </label>
-                <p className="text-sm whitespace-nowrap">
+                <p className="font-mono text-base whitespace-nowrap tabular-nums text-bone">
                   {format(multiply(line.unitPrice, line.quantity))}
                 </p>
               </div>
@@ -112,19 +119,23 @@ export default function CartPage() {
         ))}
       </ul>
 
-      <div className="mt-14 flex flex-col items-stretch gap-8 sm:items-end">
+      <div className="flex flex-col gap-12 py-14 sm:flex-row sm:items-start sm:justify-between">
+        <p className="prose-body max-w-xs text-xs">
+          Shipping and tax calculated at checkout. Everything is printed to
+          order.
+        </p>
+
         <div className="w-full sm:max-w-xs">
-          <div className="flex justify-between border-b border-rule pb-4">
+          <div className="flex items-baseline justify-between gap-6 border-b border-hairline pb-5">
             <span className="label">Subtotal</span>
-            <span className="text-sm">{format(total)}</span>
+            <span className="font-mono text-lg tabular-nums text-bone">
+              {format(total)}
+            </span>
           </div>
-          <p className="editorial mt-4 text-sm text-ink-soft">
-            Shipping and tax calculated at checkout.
-          </p>
+          <Link href="/checkout" className="btn btn-primary mt-8 w-full">
+            Checkout
+          </Link>
         </div>
-        <Link href="/checkout" className="btn btn-primary w-full sm:w-auto">
-          Checkout
-        </Link>
       </div>
     </div>
   );

@@ -37,8 +37,8 @@ if (autoConfirmRequested && paymentProviderId === "stripe") {
 
 export const config = {
   brand: {
-    name: "DNR Customs",
-    tagline: "Made to order, never to stock.",
+    name: "D&R Customs",
+    tagline: "Drop 01. Made to order, never to stock.",
     email: optional("CONTACT_EMAIL") ?? "hello@dnrcustoms.com",
   },
 

@@ -10,57 +10,58 @@ export const metadata: Metadata = {
 const STEPS = [
   {
     title: "You order",
-    body: "Nothing exists in advance. The size, the colourway and the graphic are settled at the moment you check out — not months earlier by someone guessing at demand.",
+    body: "Nothing exists in advance. Size, colourway and graphic are locked the second you check out — not six months earlier by someone guessing what would sell.",
   },
   {
     title: "We print",
-    body: "The order routes to the production house nearest you, where the artwork is printed or embroidered onto blank stock and finished by hand.",
+    body: "The order routes to the press nearest you. Artwork goes onto heavyweight blank stock, gets finished by hand, and gets checked before it is boxed.",
   },
   {
     title: "It ships",
-    body: "Most pieces leave production within two to five working days and travel domestically from there, so the journey to you is a short one.",
+    body: "Two to five working days on the press, then out the door and usually domestic from there. Short run, short trip.",
   },
 ];
 
 export default function AboutPage() {
   return (
-    <article className="mx-auto max-w-5xl px-5 py-20 sm:py-28">
-      <header className="border-b border-rule pb-12">
+    <article className="mx-auto max-w-5xl px-6 py-20 sm:px-10 sm:py-28">
+      <header className="border-b border-hairline pb-14">
         <p className="label">About</p>
-        <h1 className="display mt-6 text-6xl sm:text-7xl">
-          Made when you
+        <h1 className="display mt-8 text-6xl sm:text-8xl lg:text-9xl">
+          Made when
           <br />
-          <span className="editorial">order it.</span>
+          you order it.
         </h1>
       </header>
 
-      <div className="grid gap-x-16 gap-y-12 pt-12 sm:grid-cols-12">
+      <div className="grid gap-x-16 gap-y-12 pt-14 sm:grid-cols-12">
         <div className="sm:col-span-4 lg:col-span-3">
           <p className="label">Method</p>
-          <p className="mt-4 text-sm text-ink-soft">Print on demand</p>
+          <p className="label mt-3 text-bone">Print on demand</p>
           <p className="label mt-8">Production</p>
-          <p className="mt-4 text-sm text-ink-soft">Two to five working days</p>
+          <p className="label mt-3 text-bone">2–5 working days</p>
+          <p className="label mt-8">Runs</p>
+          <p className="label mt-3 text-bone">One drop at a time</p>
         </div>
 
         <div className="sm:col-span-8 lg:col-span-9">
-          <p className="editorial max-w-2xl text-3xl leading-snug sm:text-4xl">
-            The house keeps no warehouse. There is no unsold stock, no
-            end-of-season markdown, and no incinerator at the end of the line —
-            the industry&apos;s least discussed habit.
+          <p className="display-sub max-w-2xl text-2xl sm:text-3xl">
+            No warehouse. No dead stock. No skip out back full of last
+            season&apos;s mistakes.
           </p>
 
-          <div className="prose-editorial mt-12 space-y-6 text-sm">
+          <div className="prose-body mt-10 space-y-6 text-sm">
             <p>
-              {config.brand.name} is made to order. Each garment begins as blank
-              heavyweight stock and is printed only once a customer has asked
-              for it, in the size and colourway they chose, at a production
-              house near the address it will travel to.
+              {config.brand.name} is made to order. Every piece starts as blank
+              heavyweight stock and only gets printed once someone has actually
+              asked for it, in the size and colourway they picked, at a press
+              near the address it is headed to.
             </p>
             <p>
-              The trade-off is stated plainly: your order takes a few days
-              longer than something pulled from a shelf. In exchange, nothing is
-              produced that nobody wanted, and we can carry a full size range in
-              every colourway without gambling on which ones sell.
+              The trade is plain: a few days longer than something pulled off a
+              shelf. What you get back is a full size range in every colourway,
+              nothing made that nobody wanted, and no incentive for us to shift
+              leftovers at half price six weeks later.
             </p>
           </div>
         </div>
@@ -72,45 +73,45 @@ export default function AboutPage() {
           {STEPS.map((step, index) => (
             <li
               key={step.title}
-              className="grid gap-x-16 gap-y-4 border-t border-rule py-10 sm:grid-cols-12"
+              className="grid gap-x-16 gap-y-4 border-t border-hairline py-10 sm:grid-cols-12"
             >
               <p className="label sm:col-span-4 lg:col-span-3">
                 {String(index + 1).padStart(2, "0")}
               </p>
               <div className="sm:col-span-8 lg:col-span-9">
-                <h3 className="display text-5xl">{step.title}</h3>
-                <p className="prose-editorial mt-5 text-sm">{step.body}</p>
+                <h3 className="display text-5xl sm:text-6xl">{step.title}</h3>
+                <p className="prose-body mt-6 text-sm">{step.body}</p>
               </div>
             </li>
           ))}
         </ol>
       </section>
 
-      <section className="mt-24 grid gap-x-16 gap-y-6 border-t border-rule pt-12 sm:mt-32 sm:grid-cols-12">
+      <section className="mt-24 grid gap-x-16 gap-y-6 border-t border-hairline pt-12 sm:mt-32 sm:grid-cols-12">
         <h2 className="label sm:col-span-4 lg:col-span-3">Sizing and returns</h2>
-        <div className="prose-editorial sm:col-span-8 lg:col-span-9">
+        <div className="prose-body sm:col-span-8 lg:col-span-9">
           <p className="text-sm">
-            Because each piece is made for one person, we cannot accept returns
-            on a change of mind — the garment has nowhere to go back to.
-            Measurements are listed on every product page, and we would rather
-            answer a sizing question before printing than after.
+            Each piece is printed for one person, so a change of mind is not a
+            return — there is no shelf for it to go back to. Measurements sit on
+            the product page. Ask us before it goes on the press and we&apos;ll
+            answer; ask after and we can&apos;t undo it.
           </p>
           <p className="mt-5 text-sm">
-            Misprints, defects and shipping damage are replaced free. Write to{" "}
+            Misprints, defects and shipping damage get remade free. Mail{" "}
             <a
               href={`mailto:${config.brand.email}`}
-              className="link-rule text-ink"
+              className="link-rule text-bone"
             >
               {config.brand.email}
             </a>{" "}
-            with your order reference and a photograph, and we will remake it.
+            with your order reference and a photo and we&apos;ll run it again.
           </p>
         </div>
       </section>
 
-      <div className="mt-20 border-t border-rule pt-12">
+      <div className="mt-20 border-t border-hairline pt-12">
         <Link href="/shop" className="btn btn-primary">
-          Shop the collection
+          See Drop 01
         </Link>
       </div>
     </article>
