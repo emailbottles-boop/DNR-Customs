@@ -25,6 +25,25 @@
   # would then fail on a missing tailwind. Netlify's default already builds
   # with devDependencies installed.
 
+  # Netlify scans the build for the literal values of secret environment
+  # variables and fails the deploy if it finds one. It was matching
+  # PRINTFUL_API_KEY inside Next's *build cache* — the Turbopack .sst files
+  # under .next/cache — which the storefront needs a token to produce at all,
+  # since it prerenders the catalog.
+  #
+  # Only the cache is exempted, and deliberately so:
+  #
+  #   * .next/cache is build state, not served output. Netlify restores it
+  #     between builds for speed; it is never addressable by a visitor.
+  #   * Everything that IS served stays scanned. If the token ever leaked into
+  #     a page, a bundle, or a function, the build still fails — which is the
+  #     protection worth keeping.
+  #
+  # Scoped to paths rather than SECRETS_SCAN_OMIT_KEYS (which would stop
+  # checking this key everywhere) or SECRETS_SCAN_ENABLED=false (which would
+  # switch scanning off entirely). Both are the blunt versions of this fix.
+  SECRETS_SCAN_OMIT_PATHS = ".next/cache/**,.netlify/.next/cache/**"
+
 # Long-lived caching for the build's fingerprinted assets. Their filenames
 # change whenever the contents do, so they can be cached indefinitely.
 [[headers]]
