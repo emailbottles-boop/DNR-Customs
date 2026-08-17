@@ -20,16 +20,21 @@ export default async function ConfirmedPage({
   const stripeSession = firstValue(params.session_id);
 
   return (
-    <div className="mx-auto max-w-2xl px-5 py-32 text-center">
+    <div className="mx-auto max-w-3xl px-6 py-40 text-center sm:px-10">
       <p className="label">Order received</p>
-      <h1 className="display mt-8 text-6xl sm:text-7xl">Thank you.</h1>
+      <h1 className="display mt-10 text-7xl sm:text-8xl lg:text-9xl">
+        Thank
+        <br />
+        you.
+      </h1>
 
       {reference ? (
-        <p className="mx-auto mt-12 max-w-md text-sm leading-relaxed text-ink-soft">
-          Your reference is{" "}
-          <span className="font-mono text-ink">{reference}</span>. Keep it handy
-          if you need to get in touch.
-        </p>
+        <div className="mx-auto mt-16 max-w-xs border-t border-hairline-lit pt-6">
+          <p className="label">Reference</p>
+          <p className="mt-3 font-mono text-lg tracking-[0.14em] tabular-nums text-bone">
+            {reference}
+          </p>
+        </div>
       ) : null}
 
       {/*
@@ -39,18 +44,22 @@ export default async function ConfirmedPage({
         start.
       */}
       {instructions ? (
-        <p className="mx-auto mt-6 max-w-md text-sm leading-relaxed text-ink-soft">
-          {instructions}
-        </p>
+        <p className="prose-body mx-auto mt-12 text-sm">{instructions}</p>
       ) : stripeSession ? (
-        <p className="mx-auto mt-6 max-w-md text-sm leading-relaxed text-ink-soft">
+        <p className="prose-body mx-auto mt-12 text-sm">
           Payment received. Your order goes into production shortly.
         </p>
       ) : (
-        <p className="mx-auto mt-6 max-w-md text-sm leading-relaxed text-ink-soft">
+        <p className="prose-body mx-auto mt-12 text-sm">
           We&apos;ve recorded your order and will follow up by email.
         </p>
       )}
+
+      {reference ? (
+        <p className="label mx-auto mt-6 max-w-sm text-bone-faint">
+          Keep the reference handy if you need to get in touch.
+        </p>
+      ) : null}
 
       <div className="mt-16 flex flex-wrap justify-center gap-4">
         <Link href="/shop" className="btn btn-primary">

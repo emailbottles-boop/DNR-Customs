@@ -380,7 +380,7 @@ export default function CheckoutPage() {
             </p>
           ) : null}
 
-          <div className="pt-4">
+          <div className="border-t border-hairline pt-10">
             <button
               type="submit"
               disabled={!addressComplete || quoting || placing}
@@ -396,29 +396,31 @@ export default function CheckoutPage() {
             </button>
 
             {!addressComplete ? (
-              <p className="mt-4 text-xs text-ink-faint">
+              <p className="label mt-5 text-bone-faint">
                 Fill in the required fields to continue.
               </p>
             ) : null}
           </div>
         </form>
 
-        <aside className="h-fit border-t border-rule pt-6 lg:sticky lg:top-28">
-          <h2 className="label">Order summary</h2>
+        <aside className="h-fit border-t border-hairline-lit pt-6 lg:sticky lg:top-28">
+          <h2 className="label text-bone">Order summary</h2>
 
           <ul className="mt-6">
             {cart.lines.map((line) => (
               <li
                 key={line.variantId}
-                className="flex justify-between gap-6 border-b border-rule py-4 text-sm"
+                className="flex justify-between gap-6 border-b border-hairline py-4 text-sm"
               >
                 <span className="min-w-0">
-                  <span className="block truncate">{line.productName}</span>
-                  <span className="mt-1 block text-xs text-ink-faint">
+                  <span className="block truncate text-bone">
+                    {line.productName}
+                  </span>
+                  <span className="label mt-2 block">
                     {line.variantName} × {line.quantity}
                   </span>
                 </span>
-                <span className="shrink-0">
+                <span className="shrink-0 font-mono text-sm tabular-nums text-bone-soft">
                   {format({
                     amount: line.unitPrice.amount * line.quantity,
                     currency: line.unitPrice.currency,
@@ -428,24 +430,28 @@ export default function CheckoutPage() {
             ))}
           </ul>
 
-          <dl className="mt-6 space-y-3 text-sm">
-            <div className="flex justify-between">
+          <dl className="mt-8 space-y-4">
+            <div className="flex items-baseline justify-between gap-6">
               <dt className="label">Subtotal</dt>
-              <dd>{format(total)}</dd>
+              <dd className="font-mono text-sm tabular-nums text-bone-soft">
+                {format(total)}
+              </dd>
             </div>
-            <div className="flex justify-between">
+            <div className="flex items-baseline justify-between gap-6">
               <dt className="label">Shipping</dt>
-              <dd>{shipping ? shipping.rate.formatted : "—"}</dd>
+              <dd className="font-mono text-sm tabular-nums text-bone-soft">
+                {shipping ? shipping.rate.formatted : "—"}
+              </dd>
             </div>
-            <div className="flex items-baseline justify-between border-t border-rule pt-4">
-              <dt className="label">Total</dt>
-              <dd className="text-base">
+            <div className="flex items-baseline justify-between gap-6 border-t border-hairline pt-5">
+              <dt className="label text-bone">Total</dt>
+              <dd className="font-mono text-lg tabular-nums text-bone">
                 {format({ amount: grandTotal, currency: total.currency })}
               </dd>
             </div>
           </dl>
 
-          <p className="editorial mt-8 text-sm leading-relaxed text-ink-soft">
+          <p className="prose-body mt-10 text-xs">
             Taxes, where applicable, are calculated by the fulfiller and shown on
             your invoice.
           </p>
@@ -490,14 +496,14 @@ function Field({
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? `${id}-error` : hint ? `${id}-hint` : undefined}
         onChange={(event) => onChange(event.target.value)}
-        className="field-input mt-2"
+        className="field-input mt-3"
       />
       {error ? (
-        <p id={`${id}-error`} className="mt-2 text-xs text-alert">
+        <p id={`${id}-error`} className="mt-3 font-mono text-xs text-alert">
           {error}
         </p>
       ) : hint ? (
-        <p id={`${id}-hint`} className="mt-2 text-xs text-ink-faint">
+        <p id={`${id}-hint`} className="label mt-3 text-bone-faint">
           {hint}
         </p>
       ) : null}
