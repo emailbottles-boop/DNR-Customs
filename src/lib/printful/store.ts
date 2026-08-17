@@ -183,6 +183,61 @@ export async function createOrder(
   });
 }
 
+export type ConfirmResult =
+  | { status: "confirmed"; orderId: number }
+  | { status: "already-confirmed"; orderId: number; printfulStatus: string }
+  | { status: "not-found" };
+
+/**
+ * Confirms a draft order for production, looked up by our own reference.
+ *
+ * This is the moment money turns into a printed garment: until it runs, the
+ * order is an inert draft that Printful neither prints nor bills. It is called
+ * only from the Stripe webhook, after a verified payment.
+ *
+ * Idempotent by necessity — Stripe retries webhooks, and confirming twice must
+ * not double-charge. An order that is already past draft is reported as such
+ * rather than re-confirmed.
+ */
+export async function confirmOrderByReference(
+  reference: string,
+): Promise<ConfirmResult> {
+  if (isMock) {
+    console.info(`[printful:mock] would confirm order ${reference}`);
+    return { status: "confirmed", orderId: 0 };
+  }
+
+  let existing: PrintfulOrder;
+  try {
+    // "@" prefixes a lookup by external_id rather than Printful's own id.
+    existing = await printfulRequest({
+      path: `/orders/@${encodeURIComponent(reference)}`,
+      schema: orderSchema,
+    });
+  } catch (error) {
+    if (error instanceof PrintfulError && error.status === 404) {
+      return { status: "not-found" };
+    }
+    throw error;
+  }
+
+  if (existing.status !== "draft") {
+    return {
+      status: "already-confirmed",
+      orderId: existing.id,
+      printfulStatus: existing.status,
+    };
+  }
+
+  const confirmed = await printfulRequest({
+    path: `/orders/${existing.id}/confirm`,
+    schema: orderSchema,
+    method: "POST",
+  });
+
+  return { status: "confirmed", orderId: confirmed.id };
+}
+
 /**
  * Re-prices a cart from catalog data. The client sends ids and quantities only;
  * every price the customer is charged is resolved here, server-side, so a
