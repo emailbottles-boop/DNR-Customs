@@ -101,18 +101,58 @@ up in the shop. The catalog is cached for 5 minutes.
 Product URLs are `/shop/<name>-<printful-id>`, so two products sharing a name
 stay distinct and a lookup never has to guess.
 
+## How the money actually moves
+
+Worth being explicit, because it surprises people: **Printful never takes your
+customer's money.** Printful is the fulfiller. When an order is confirmed, they
+charge *you* for the blank, the printing, and the shipping.
+
+So there are two separate flows:
+
+| | From | To | Handled by |
+| --- | --- | --- | --- |
+| Revenue | Customer | You | Stripe, on this site |
+| Cost | You | Printful | Printful bills your card on file |
+
+Your margin is the gap. (Printful's own hosted `*.printful.me` store *does*
+collect from customers and pay out — but that is a Printful product, not
+something the API offers a custom storefront.)
+
+The order of operations is deliberate:
+
+1. Checkout creates the Printful order as an **unconfirmed draft**. Nothing
+   prints, nothing is billed.
+2. The customer pays through Stripe Checkout.
+3. Stripe calls the webhook; the signature is verified; the draft is
+   **confirmed** and goes into production.
+
+A failure anywhere before step 3 leaves an inert draft rather than an unpaid
+garment in production.
+
 ## Turning on Stripe
 
-Set `STRIPE_SECRET_KEY` and checkout switches from invoicing to Stripe Checkout
-on the next boot — no code change. The adapter is implemented against Stripe's
-REST API and creates a session with your line items, shipping rate, and the
-order reference as `client_reference_id`.
+1. Set `STRIPE_SECRET_KEY`. Checkout switches from invoicing to Stripe Checkout
+   on the next boot — no code change.
+2. Add a webhook endpoint in the Stripe dashboard pointing at
+   `https://your-domain/api/webhooks/stripe`, subscribed to
+   **`checkout.session.completed`**.
+3. Copy that endpoint's signing secret into `STRIPE_WEBHOOK_SECRET`.
 
-One piece is deliberately left to do, because it needs a real Stripe account to
-build against: **a `/api/webhooks/stripe` route that confirms the Printful draft
-order once `checkout.session.completed` fires.** Until that exists, a Stripe
-payment succeeds and the Printful order stays a draft awaiting manual
-confirmation — safe, but manual. `STRIPE_WEBHOOK_SECRET` is reserved for it.
+Test it locally with the Stripe CLI:
+
+```bash
+stripe listen --forward-to localhost:3000/api/webhooks/stripe
+stripe trigger checkout.session.completed
+```
+
+The webhook verifies Stripe's signature over the raw request body, rejects
+replays older than five minutes, and is idempotent — Stripe retries, and
+confirming an already-confirmed order is a no-op. Without
+`STRIPE_WEBHOOK_SECRET` set, the route refuses every request rather than
+confirming orders it cannot authenticate.
+
+`PRINTFUL_AUTO_CONFIRM` is ignored while Stripe is enabled: confirmation is the
+webhook's job, and auto-confirming would put unpaid orders into production.
 
 ## Commands
 

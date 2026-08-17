@@ -1,0 +1,131 @@
+import { NextResponse } from "next/server";
+import { config } from "@/lib/config";
+import { verifyStripeSignature } from "@/lib/payments/stripe-signature";
+import { confirmOrderByReference } from "@/lib/printful/store";
+
+/**
+ * Stripe webhook: turns a completed payment into a confirmed Printful order.
+ *
+ * This closes the loop. Checkout deliberately creates the Printful order as an
+ * unconfirmed draft — nothing prints, nothing is billed — and only a verified
+ * `checkout.session.completed` promotes it to production.
+ *
+ * On status codes: Stripe retries anything that isn't 2xx, for days. So a
+ * *transient* failure (Printful down) returns 5xx to earn a retry, while an
+ * *unactionable* event (unknown reference, event we don't handle) returns 2xx,
+ * because retrying it forever would never succeed.
+ */
+
+// The signature is computed over the exact bytes Stripe sent, so this route
+// must never be statically optimised or have its body pre-parsed.
+export const dynamic = "force-dynamic";
+
+type CheckoutSession = {
+  id?: string;
+  client_reference_id?: string | null;
+  payment_status?: string | null;
+  metadata?: Record<string, string> | null;
+};
+
+type StripeEvent = {
+  id?: string;
+  type?: string;
+  data?: { object?: CheckoutSession };
+};
+
+export async function POST(request: Request) {
+  const secret = config.payments.stripeWebhookSecret;
+
+  if (!secret) {
+    // Refuse rather than accept unverifiable calls: an endpoint that confirms
+    // orders without checking signatures is a way to order free merchandise.
+    console.error(
+      "[webhooks/stripe] STRIPE_WEBHOOK_SECRET is not set; refusing to process.",
+    );
+    return NextResponse.json(
+      { error: "Webhook is not configured." },
+      { status: 500 },
+    );
+  }
+
+  // Raw text, never request.json() — re-serialising changes the bytes and the
+  // signature would no longer match.
+  const rawBody = await request.text();
+
+  const result = verifyStripeSignature({
+    rawBody,
+    header: request.headers.get("stripe-signature"),
+    secret,
+  });
+
+  if (!result.valid) {
+    console.warn(`[webhooks/stripe] rejected: ${result.reason}`);
+    return NextResponse.json({ error: "Invalid signature." }, { status: 400 });
+  }
+
+  let event: StripeEvent;
+  try {
+    event = JSON.parse(rawBody) as StripeEvent;
+  } catch {
+    return NextResponse.json({ error: "Malformed payload." }, { status: 400 });
+  }
+
+  // Signed but uninteresting: acknowledge so Stripe stops sending it.
+  if (event.type !== "checkout.session.completed") {
+    return NextResponse.json({ received: true, ignored: event.type });
+  }
+
+  const session = event.data?.object ?? {};
+  const reference =
+    session.client_reference_id || session.metadata?.order_reference;
+
+  if (!reference) {
+    console.error(
+      `[webhooks/stripe] session ${session.id ?? "?"} carried no order reference.`,
+    );
+    return NextResponse.json({ received: true, confirmed: false });
+  }
+
+  // Async payment methods complete the session before the money settles.
+  // Confirming then would put an unpaid order into production.
+  if (session.payment_status && session.payment_status !== "paid") {
+    console.info(
+      `[webhooks/stripe] ${reference} not yet paid (${session.payment_status}); leaving as draft.`,
+    );
+    return NextResponse.json({ received: true, confirmed: false });
+  }
+
+  try {
+    const outcome = await confirmOrderByReference(reference);
+
+    switch (outcome.status) {
+      case "confirmed":
+        console.info(
+          `[webhooks/stripe] ${reference} paid — Printful order ${outcome.orderId} confirmed.`,
+        );
+        return NextResponse.json({ received: true, confirmed: true });
+
+      case "already-confirmed":
+        // Expected on a Stripe retry; not an error.
+        console.info(
+          `[webhooks/stripe] ${reference} already ${outcome.printfulStatus}; nothing to do.`,
+        );
+        return NextResponse.json({ received: true, confirmed: true });
+
+      case "not-found":
+        // Payment taken with no matching draft. Needs a human, but retrying
+        // will not conjure the order, so acknowledge and shout in the logs.
+        console.error(
+          `[webhooks/stripe] PAID BUT NO ORDER: no Printful draft for ${reference}. Fulfil manually.`,
+        );
+        return NextResponse.json({ received: true, confirmed: false });
+    }
+  } catch (error) {
+    // Transient — let Stripe retry.
+    console.error(`[webhooks/stripe] failed to confirm ${reference}:`, error);
+    return NextResponse.json(
+      { error: "Could not confirm the order." },
+      { status: 503 },
+    );
+  }
+}

@@ -17,6 +17,24 @@ function optional(name: string): string | undefined {
 const printfulToken = optional("PRINTFUL_API_KEY");
 const stripeSecret = optional("STRIPE_SECRET_KEY");
 
+const paymentProviderId = stripeSecret ? ("stripe" as const) : ("manual" as const);
+const autoConfirmRequested = optional("PRINTFUL_AUTO_CONFIRM") === "true";
+
+/**
+ * With Stripe, confirming an order is the webhook's job — it happens after the
+ * payment clears. Honouring auto-confirm as well would push orders into
+ * production the moment they are created, before anyone has paid, so the two
+ * settings are resolved here rather than trusted independently.
+ */
+const autoConfirmOrders =
+  paymentProviderId === "stripe" ? false : autoConfirmRequested;
+
+if (autoConfirmRequested && paymentProviderId === "stripe") {
+  console.warn(
+    "[config] PRINTFUL_AUTO_CONFIRM is ignored while Stripe is enabled: orders are confirmed by the Stripe webhook once payment clears.",
+  );
+}
+
 export const config = {
   brand: {
     name: "DNR Customs",
@@ -38,18 +56,20 @@ export const config = {
      * "stripe" once a secret key is present, otherwise "manual": the order is
      * recorded as a draft in Printful and payment is arranged out of band.
      */
-    provider: stripeSecret ? ("stripe" as const) : ("manual" as const),
+    provider: paymentProviderId,
     stripeSecretKey: stripeSecret,
     stripePublishableKey: optional("STRIPE_PUBLISHABLE_KEY"),
     stripeWebhookSecret: optional("STRIPE_WEBHOOK_SECRET"),
   },
 
   /**
-   * Draft orders are never auto-confirmed for fulfilment. Printful only charges
-   * and prints once an order is confirmed, so leaving this false means a bug in
-   * checkout costs nothing. Flip it only after payments are wired end to end.
+   * Whether a newly created Printful order is confirmed for production
+   * immediately. Printful only charges and prints once an order is confirmed,
+   * so leaving this false means a bug in checkout costs nothing.
+   *
+   * Forced false under Stripe — see the resolution above.
    */
-  autoConfirmOrders: optional("PRINTFUL_AUTO_CONFIRM") === "true",
+  autoConfirmOrders,
 
   siteUrl: optional("NEXT_PUBLIC_SITE_URL") ?? "http://localhost:3000",
 } as const;
