@@ -30,6 +30,8 @@ function buildVariants(
     SIZES.map((size, sizeIndex) => ({
       // Deterministic negative ids, unique per product/colour/size.
       id: productId * 100 - (colorIndex * SIZES.length + sizeIndex) - 1,
+      // Demo blanks have no real catalog counterpart.
+      catalogVariantId: null,
       name: `${color.name} / ${size}`,
       size,
       color: color.name,
@@ -116,6 +118,7 @@ export const MOCK_PRODUCTS: Product[] = [
     variants: [
       {
         id: -401,
+        catalogVariantId: null,
         name: "Olive / One Size",
         size: "One Size",
         color: "Olive",
@@ -125,6 +128,7 @@ export const MOCK_PRODUCTS: Product[] = [
       },
       {
         id: -402,
+        catalogVariantId: null,
         name: "Black / One Size",
         size: "One Size",
         color: "Black",

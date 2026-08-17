@@ -100,9 +100,16 @@ export type ShippingOption = {
 
 export type OrderItemInput = { variantId: number; quantity: number };
 
+/** What /shipping/rates needs: the catalog id, not the sync id. */
+export type ShippingItemInput = {
+  catalogVariantId: number | null;
+  variantId: number;
+  quantity: number;
+};
+
 export async function getShippingOptions(
   recipient: Recipient,
-  items: OrderItemInput[],
+  items: ShippingItemInput[],
 ): Promise<ShippingOption[]> {
   const rates = isMock
     ? MOCK_SHIPPING_RATES
@@ -112,8 +119,12 @@ export async function getShippingOptions(
         method: "POST",
         body: {
           recipient,
+          // This endpoint quotes against catalog variants. Orders use the sync
+          // id instead; sending that here is rejected. Fall back to the sync id
+          // only when Printful reported no catalog id at all, which should not
+          // happen for a synced product.
           items: items.map((item) => ({
-            sync_variant_id: item.variantId,
+            variant_id: item.catalogVariantId ?? item.variantId,
             quantity: item.quantity,
           })),
           currency: "USD",
@@ -251,13 +262,20 @@ export async function priceItems(items: OrderItemInput[]): Promise<{
     productName: string;
     variantName: string;
     image: string | null;
+    catalogVariantId: number | null;
   }>;
   missing: number[];
 }> {
   const products = await listProducts();
   const index = new Map<
     number,
-    { product: Product; price: Money; name: string; image: string | null }
+    {
+      product: Product;
+      price: Money;
+      name: string;
+      image: string | null;
+      catalogVariantId: number | null;
+    }
   >();
 
   for (const product of products) {
@@ -269,6 +287,7 @@ export async function priceItems(items: OrderItemInput[]): Promise<{
         name: variant.name,
         // Prefer the variant's own mockup; fall back to the product shot.
         image: variant.image ?? product.thumbnail,
+        catalogVariantId: variant.catalogVariantId,
       });
     }
   }
@@ -289,6 +308,7 @@ export async function priceItems(items: OrderItemInput[]): Promise<{
       productName: match.product.name,
       variantName: match.name,
       image: match.image,
+      catalogVariantId: match.catalogVariantId,
     });
   }
 

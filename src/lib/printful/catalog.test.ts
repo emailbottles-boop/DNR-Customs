@@ -89,6 +89,32 @@ describe("parseVariantOptions", () => {
 });
 
 describe("toVariant", () => {
+  it("keeps the catalog variant id, which shipping rates are quoted against", () => {
+    // Printful uses two different ids for one variant: the sync id identifies
+    // your store's copy and places orders, the catalog id identifies the blank
+    // and quotes shipping. Dropping the catalog id made every shipping quote
+    // fail, so both are pinned here.
+    const mapped = toVariant(syncVariant(), "USD")!;
+    expect(mapped.id).toBe(4001); // sync variant id — used for orders
+    expect(mapped.catalogVariantId).toBe(4012); // catalog id — used for rates
+  });
+
+  it("falls back to the nested catalog product for the catalog id", () => {
+    const mapped = toVariant(
+      syncVariant({ variant_id: undefined }),
+      "USD",
+    )!;
+    expect(mapped.catalogVariantId).toBe(4012);
+  });
+
+  it("reports a null catalog id rather than inventing one", () => {
+    const mapped = toVariant(
+      syncVariant({ variant_id: undefined, product: null }),
+      "USD",
+    )!;
+    expect(mapped.catalogVariantId).toBeNull();
+  });
+
   it("parses the price into minor units", () => {
     expect(toVariant(syncVariant(), "USD")?.price).toEqual({
       amount: 2950,

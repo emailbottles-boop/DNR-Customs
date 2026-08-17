@@ -9,6 +9,15 @@ import type { Money } from "./money";
 export type ProductVariant = {
   /** Printful sync variant id. What we send back when placing an order. */
   id: number;
+  /**
+   * Printful *catalog* variant id — the blank garment in their catalog, as
+   * opposed to your store's version of it.
+   *
+   * Two different ids for the same thing, and the API is not consistent about
+   * which it wants: orders are placed with the sync id, but shipping rates are
+   * quoted against the catalog id. Null if Printful didn't report one.
+   */
+  catalogVariantId: number | null;
   /** Human label for the variant, e.g. "Black / L". */
   name: string;
   /** Parsed option values, e.g. { size: "L", color: "Black" }. */

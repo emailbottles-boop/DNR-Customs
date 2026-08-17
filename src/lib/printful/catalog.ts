@@ -98,6 +98,9 @@ export function toVariant(
 
   return {
     id: variant.id,
+    // Printful reports this on the sync variant itself and again on the nested
+    // catalog product; either will do, and it is needed to quote shipping.
+    catalogVariantId: variant.variant_id ?? variant.product?.variant_id ?? null,
     name: label,
     size,
     color,

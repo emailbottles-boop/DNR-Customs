@@ -49,14 +49,16 @@ export async function quoteShipping(
   recipient: RecipientInput,
   items: Array<{ variantId: number; quantity: number }>,
 ): Promise<ShippingOption[]> {
-  const { missing } = await priceItems(items);
+  // Re-priced first because that lookup is what resolves each cart line to its
+  // catalog variant id, which is the id the rates endpoint actually quotes on.
+  const { lines, missing } = await priceItems(items);
   if (missing.length > 0) {
     throw new CheckoutError(
       "Some items in your cart are no longer available. Please review your cart.",
       409,
     );
   }
-  return getShippingOptions(toRecipient(recipient), items);
+  return getShippingOptions(toRecipient(recipient), lines);
 }
 
 /**
@@ -84,7 +86,7 @@ export async function placeOrder(input: PlaceOrderInput) {
 
   const shippingOptions = await getShippingOptions(
     toRecipient(input.recipient),
-    input.items,
+    lines,
   );
 
   // Fall back to the cheapest option if the client sent one we don't recognise,

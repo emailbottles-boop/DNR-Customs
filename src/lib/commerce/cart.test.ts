@@ -18,6 +18,7 @@ import type { Product, ProductVariant } from "./product";
 function variant(id: number, price: number, name = `Variant ${id}`): ProductVariant {
   return {
     id,
+    catalogVariantId: null,
     name,
     size: null,
     color: null,
