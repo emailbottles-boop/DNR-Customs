@@ -19,7 +19,11 @@
 
 import { z } from "zod";
 import { toProduct } from "../src/lib/printful/catalog";
-import { syncProductDetail, syncProductSummary } from "../src/lib/printful/types";
+import {
+  store as storeSchema,
+  syncProductDetail,
+  syncProductSummary,
+} from "../src/lib/printful/types";
 import { format } from "../src/lib/commerce/money";
 import type { Product } from "../src/lib/commerce/product";
 
@@ -120,19 +124,57 @@ async function main() {
   }
 
   console.log(dim(`  endpoint  ${BASE}`));
-  console.log(dim(`  store id  ${STORE_ID || "(store-level token)"}`));
+  console.log(dim(`  store id  ${STORE_ID || "(none set)"}`));
+
+  // Which stores can this token see? Printing them turns "my store isn't in the
+  // dropdown" into a concrete id to paste into PRINTFUL_STORE_ID. Store-level
+  // tokens are scoped to one store and may refuse this call, which is fine.
+  let stores: Array<z.infer<typeof storeSchema>> = [];
+  try {
+    stores = await api("/stores", z.array(storeSchema));
+  } catch {
+    // Not fatal — a store-level token doesn't need this.
+  }
+
+  if (stores.length > 0) {
+    console.log(bold("\nStores on this account"));
+    for (const s of stores) {
+      const marker = STORE_ID && String(s.id) === STORE_ID ? green(" ← selected") : "";
+      console.log(
+        `  ${bold(String(s.id))}  ${s.name ?? "(unnamed)"}${s.type ? dim(` · ${s.type}`) : ""}${marker}`,
+      );
+    }
+    if (!STORE_ID && stores.length > 1) {
+      console.log(
+        yellow(
+          `\n  ${stores.length} stores visible and PRINTFUL_STORE_ID is not set.`,
+        ),
+      );
+      console.log(dim("  Put the id of the one you sell from in .env.local."));
+    }
+  }
 
   let summaries;
   try {
     summaries = await api("/store/products?limit=100", z.array(syncProductSummary));
   } catch (error) {
-    console.log(`\n${red("Could not reach Printful.")}`);
+    console.log(`\n${red("Could not read products.")}`);
     console.log(`  ${error instanceof Error ? error.message : String(error)}`);
-    console.log(`
+
+    if (stores.length > 0 && !STORE_ID) {
+      console.log(yellow(`
+  This token can see the store(s) listed above but doesn't know which to use.
+  Add one to .env.local and run this again:
+
+    PRINTFUL_STORE_ID=${stores[0].id}
+`));
+    } else {
+      console.log(`
   Common causes:
     401/403  the token is wrong, revoked, or lacks Products read access
     404      an account-level token without PRINTFUL_STORE_ID set
 `);
+    }
     process.exitCode = 1;
     return;
   }
@@ -142,6 +184,20 @@ async function main() {
 
   console.log(green(`\n  ✓ connected — ${summaries.length} product(s) in the store`));
   if (ignored > 0) console.log(dim(`    ${ignored} ignored in Printful, skipped`));
+
+  if (summaries.length === 0) {
+    // Connecting fine but seeing nothing usually means the token is pointed at
+    // the wrong store, not that anything is broken.
+    console.log(yellow(`
+  The token works, but this store has no products in it.
+
+  Either it is not the store you sell from — check the ids above and set
+  PRINTFUL_STORE_ID — or the products were made somewhere other than a
+  store (personal orders and product templates do not count; they have no
+  catalog the API can read).
+`));
+    return;
+  }
 
   let unparsedTotal = 0;
   let variantTotal = 0;

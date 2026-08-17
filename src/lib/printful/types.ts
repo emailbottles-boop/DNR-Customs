@@ -35,6 +35,17 @@ export const errorEnvelope = z.object({
     .optional(),
 });
 
+/**
+ * A store on the account. Account-level tokens can see several, and every
+ * catalog call then has to say which one via the X-PF-Store-Id header.
+ */
+export const store = z.object({
+  id: z.number(),
+  name: z.string().nullish(),
+  type: z.string().nullish(),
+  website: z.string().nullish(),
+});
+
 export const syncProductSummary = z.object({
   id: z.number(),
   external_id: z.string().nullish(),
