@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useCart } from "@/components/use-cart";
 import { toOrderItems } from "@/lib/commerce/cart";
 import { format } from "@/lib/commerce/money";
+import { PRINT_PLACEMENT } from "@/lib/commerce/copy";
 import type {
   ApiError,
   PlaceOrderResponse,
@@ -451,7 +452,15 @@ export default function CheckoutPage() {
             </div>
           </dl>
 
-          <p className="prose-body mt-10 text-xs">
+          {/*
+            Restated here because checkout is the last moment anyone can change
+            their mind for free. After this the garment is made for them.
+          */}
+          <p className="mt-8 border-l-2 border-signal py-1 pl-4 text-xs text-bone">
+            {PRINT_PLACEMENT}
+          </p>
+
+          <p className="prose-body mt-6 text-xs">
             Taxes, where applicable, are calculated by the fulfiller and shown on
             your invoice.
           </p>

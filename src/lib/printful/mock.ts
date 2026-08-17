@@ -73,14 +73,11 @@ export const MOCK_PRODUCTS: Product[] = [
     variants: buildVariants(
       -1,
       4200,
-      [
-        { name: "Midnight", swatch: "#20222a" },
-        { name: "Bone", swatch: "#e4dfd4" },
-        { name: "Clay", swatch: "#9d7a63" },
-      ],
-      // A realistic gap: the picker must handle a colour/size pair that
-      // simply is not made.
-      [["Clay", "2XL"]],
+      // One colourway, matching the live drop. The real catalog comes from
+      // Printful; this only has to keep local development honest.
+      [{ name: "Black", swatch: "#141414" }],
+      // A realistic gap: the picker must handle a size that is not made.
+      [["Black", "2XL"]],
     ),
   },
 ];

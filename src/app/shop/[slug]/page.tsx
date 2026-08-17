@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { PRINT_PLACEMENT } from "@/lib/commerce/copy";
 import { ProductImage } from "@/components/product-image";
 import { ProductPurchase } from "@/components/product-purchase";
 import { getProductBySlug, listProducts } from "@/lib/printful/store";
@@ -86,9 +87,24 @@ export default async function ProductPage({ params }: PageProps<"/shop/[slug]">)
             <p className="prose-body text-sm">{product.description}</p>
           ) : null}
 
+          {/*
+            Placement sits above the picker, not in the spec list below it.
+            The mockup is a front view and the print is on the back, so a buyer
+            who reads only the image walks away with the wrong idea. Stating it
+            before they choose a size is the point.
+          */}
+          <p className="mt-8 flex gap-3 border-l-2 border-signal py-1 pl-4 text-sm text-bone">
+            <span className="label shrink-0 pt-0.5">Print</span>
+            <span>{PRINT_PLACEMENT}</span>
+          </p>
+
           <ProductPurchase product={product} />
 
           <dl className="mt-16 border-t border-hairline text-sm">
+            <div className="flex gap-6 border-b border-hairline py-4">
+              <dt className="label w-28 shrink-0 pt-0.5">Placement</dt>
+              <dd className="text-bone-soft">{PRINT_PLACEMENT}</dd>
+            </div>
             <div className="flex gap-6 border-b border-hairline py-4">
               <dt className="label w-28 shrink-0 pt-0.5">Sizing</dt>
               <dd className="text-bone-soft">
