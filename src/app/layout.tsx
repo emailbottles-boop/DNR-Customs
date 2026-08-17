@@ -1,19 +1,29 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Cormorant_Garamond, Jost } from "next/font/google";
 import "./globals.css";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { config } from "@/lib/config";
 import { isDemoCatalog } from "@/lib/printful/store";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+/**
+ * An editorial pairing: a high-contrast serif carries the statement headlines,
+ * a geometric grotesque handles everything functional. Light weights only —
+ * the display face is set large, where heavy weights read as shouting.
+ */
+const cormorant = Cormorant_Garamond({
+  variable: "--font-cormorant",
   subsets: ["latin"],
+  weight: ["300", "400", "500"],
+  style: ["normal", "italic"],
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const jost = Jost({
+  variable: "--font-jost",
   subsets: ["latin"],
+  weight: ["300", "400", "500"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -34,9 +44,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${cormorant.variable} ${jost.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col font-sans">
+      <body className="flex min-h-full flex-col">
         <SiteHeader />
         <main className="flex-1">{children}</main>
         <SiteFooter demoMode={isDemoCatalog()} />

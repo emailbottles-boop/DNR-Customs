@@ -3,22 +3,27 @@ import { config } from "@/lib/config";
 
 export function SiteFooter({ demoMode }: { demoMode: boolean }) {
   return (
-    <footer className="mt-24 border-t border-border">
-      <div className="mx-auto flex max-w-6xl flex-col gap-6 px-5 py-10 sm:flex-row sm:items-center sm:justify-between">
+    <footer className="mt-32 border-t border-rule">
+      <div className="mx-auto flex max-w-6xl flex-col gap-12 px-5 py-20 sm:flex-row sm:items-end sm:justify-between sm:py-24">
         <div>
-          <p className="display text-lg">
-            DNR<span className="text-accent">.</span> Customs
+          <p className="-mr-[0.36em] text-[0.8125rem] uppercase tracking-[0.36em] text-ink">
+            DNR Customs
           </p>
-          <p className="mt-1 text-sm text-muted">{config.brand.tagline}</p>
+          <p className="editorial mt-5 text-xl text-ink-soft">
+            {config.brand.tagline}
+          </p>
         </div>
 
-        <div className="flex flex-col gap-2 text-sm text-muted sm:items-end">
-          <Link href="/shop" className="transition-colors hover:text-foreground">
+        <div className="flex flex-col gap-4 sm:items-end">
+          <Link
+            href="/shop"
+            className="label link-rule transition-colors duration-300 hover:text-ink"
+          >
             Shop
           </Link>
           <a
             href={`mailto:${config.brand.email}`}
-            className="transition-colors hover:text-foreground"
+            className="label link-rule transition-colors duration-300 hover:text-ink"
           >
             {config.brand.email}
           </a>
@@ -26,8 +31,8 @@ export function SiteFooter({ demoMode }: { demoMode: boolean }) {
       </div>
 
       {demoMode ? (
-        <div className="border-t border-border px-5 py-3 text-center">
-          <p className="eyebrow">
+        <div className="border-t border-rule">
+          <p className="label mx-auto max-w-6xl px-5 py-6 text-center text-ink-faint">
             Demo catalog — set PRINTFUL_API_KEY to load real products
           </p>
         </div>
