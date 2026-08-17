@@ -197,7 +197,7 @@ export default function CheckoutPage() {
 
   if (!ready) {
     return (
-      <div className="mx-auto max-w-4xl px-5 py-24">
+      <div className="mx-auto max-w-5xl px-6 py-32 sm:px-10">
         <p className="label">Loading…</p>
       </div>
     );
@@ -205,13 +205,17 @@ export default function CheckoutPage() {
 
   if (cart.lines.length === 0) {
     return (
-      <div className="mx-auto max-w-2xl px-5 py-32 text-center">
-        <p className="label">Checkout</p>
-        <h1 className="display mt-6 text-5xl sm:text-6xl">
-          Nothing to check out
+      <div className="mx-auto max-w-3xl px-6 py-36 text-center sm:px-10">
+        <p className="label">Checkout — empty</p>
+        <h1 className="display mt-8 text-6xl sm:text-8xl">
+          Nothing to
+          <br />
+          check out
         </h1>
-        <p className="mt-8 text-sm text-ink-soft">Your cart is empty.</p>
-        <Link href="/shop" className="btn btn-primary mt-12">
+        <p className="prose-body mx-auto mt-10 text-sm">
+          Your cart is empty. Pick something from the line first.
+        </p>
+        <Link href="/shop" className="btn btn-primary mt-14">
           Browse the shop
         </Link>
       </div>
@@ -221,11 +225,13 @@ export default function CheckoutPage() {
   const grandTotal = shipping ? total.amount + shipping.rate.amount : total.amount;
 
   return (
-    <div className="mx-auto max-w-5xl px-5 py-24">
-      <p className="label">Step 2 of 2</p>
-      <h1 className="display mt-5 text-6xl sm:text-7xl">Checkout</h1>
+    <div className="mx-auto max-w-5xl px-6 sm:px-10">
+      <header className="border-b border-hairline py-24 sm:py-28">
+        <p className="label">Step 2 of 2</p>
+        <h1 className="display mt-6 text-7xl sm:text-8xl">Checkout</h1>
+      </header>
 
-      <div className="mt-20 grid gap-16 lg:grid-cols-[1fr_320px] lg:gap-24">
+      <div className="grid gap-16 py-16 lg:grid-cols-[1fr_320px] lg:gap-24 lg:py-20">
         <form
           className="space-y-8"
           onSubmit={(event) => {
@@ -234,7 +240,9 @@ export default function CheckoutPage() {
             else void handleQuote();
           }}
         >
-          <h2 className="label border-b border-rule pb-4">Delivery address</h2>
+          <h2 className="label border-b border-hairline pb-4 text-bone">
+            01 — Delivery address
+          </h2>
 
           <Field
             label="Full name"
@@ -319,13 +327,15 @@ export default function CheckoutPage() {
           />
 
           {options ? (
-            <fieldset className="pt-8">
-              <legend className="label">Shipping method</legend>
-              <div className="mt-6 border-t border-rule">
+            <fieldset className="pt-10">
+              <legend className="label border-b border-hairline pb-4 text-bone">
+                02 — Shipping method
+              </legend>
+              <div className="mt-6">
                 {options.map((option) => (
                   <label
                     key={option.id}
-                    className="flex cursor-pointer items-center justify-between gap-6 border-b border-rule py-5"
+                    className="flex cursor-pointer items-center justify-between gap-6 border-b border-hairline py-5 transition-colors hover:border-hairline-lit"
                   >
                     <span className="flex items-center gap-4">
                       <input
@@ -334,25 +344,25 @@ export default function CheckoutPage() {
                         value={option.id}
                         checked={shipping?.id === option.id}
                         onChange={() => setChosenShippingId(option.id)}
-                        className="accent-ink"
+                        className="accent-bone"
                       />
                       <span
                         className={`text-sm transition-colors ${
                           shipping?.id === option.id
-                            ? "text-ink"
-                            : "text-ink-soft"
+                            ? "text-bone"
+                            : "text-bone-soft"
                         }`}
                       >
                         {option.name}
                         {option.minDeliveryDays && option.maxDeliveryDays ? (
-                          <span className="mt-1 block text-xs text-ink-faint">
+                          <span className="label mt-2 block">
                             {option.minDeliveryDays}–{option.maxDeliveryDays}{" "}
                             business days
                           </span>
                         ) : null}
                       </span>
                     </span>
-                    <span className="text-sm whitespace-nowrap">
+                    <span className="font-mono text-sm whitespace-nowrap tabular-nums text-bone">
                       {option.rate.formatted}
                     </span>
                   </label>
@@ -364,13 +374,13 @@ export default function CheckoutPage() {
           {error ? (
             <p
               role="alert"
-              className="border-l border-alert py-1 pl-4 text-sm text-alert"
+              className="border-l-2 border-alert bg-surface px-4 py-3 text-sm text-alert"
             >
               {error}
             </p>
           ) : null}
 
-          <div className="pt-4">
+          <div className="border-t border-hairline pt-10">
             <button
               type="submit"
               disabled={!addressComplete || quoting || placing}
@@ -386,29 +396,31 @@ export default function CheckoutPage() {
             </button>
 
             {!addressComplete ? (
-              <p className="mt-4 text-xs text-ink-faint">
+              <p className="label mt-5 text-bone-faint">
                 Fill in the required fields to continue.
               </p>
             ) : null}
           </div>
         </form>
 
-        <aside className="h-fit border-t border-rule pt-6 lg:sticky lg:top-28">
-          <h2 className="label">Order summary</h2>
+        <aside className="h-fit border-t border-hairline-lit pt-6 lg:sticky lg:top-28">
+          <h2 className="label text-bone">Order summary</h2>
 
           <ul className="mt-6">
             {cart.lines.map((line) => (
               <li
                 key={line.variantId}
-                className="flex justify-between gap-6 border-b border-rule py-4 text-sm"
+                className="flex justify-between gap-6 border-b border-hairline py-4 text-sm"
               >
                 <span className="min-w-0">
-                  <span className="block truncate">{line.productName}</span>
-                  <span className="mt-1 block text-xs text-ink-faint">
+                  <span className="block truncate text-bone">
+                    {line.productName}
+                  </span>
+                  <span className="label mt-2 block">
                     {line.variantName} × {line.quantity}
                   </span>
                 </span>
-                <span className="shrink-0">
+                <span className="shrink-0 font-mono text-sm tabular-nums text-bone-soft">
                   {format({
                     amount: line.unitPrice.amount * line.quantity,
                     currency: line.unitPrice.currency,
@@ -418,24 +430,28 @@ export default function CheckoutPage() {
             ))}
           </ul>
 
-          <dl className="mt-6 space-y-3 text-sm">
-            <div className="flex justify-between">
+          <dl className="mt-8 space-y-4">
+            <div className="flex items-baseline justify-between gap-6">
               <dt className="label">Subtotal</dt>
-              <dd>{format(total)}</dd>
+              <dd className="font-mono text-sm tabular-nums text-bone-soft">
+                {format(total)}
+              </dd>
             </div>
-            <div className="flex justify-between">
+            <div className="flex items-baseline justify-between gap-6">
               <dt className="label">Shipping</dt>
-              <dd>{shipping ? shipping.rate.formatted : "—"}</dd>
+              <dd className="font-mono text-sm tabular-nums text-bone-soft">
+                {shipping ? shipping.rate.formatted : "—"}
+              </dd>
             </div>
-            <div className="flex items-baseline justify-between border-t border-rule pt-4">
-              <dt className="label">Total</dt>
-              <dd className="text-base">
+            <div className="flex items-baseline justify-between gap-6 border-t border-hairline pt-5">
+              <dt className="label text-bone">Total</dt>
+              <dd className="font-mono text-lg tabular-nums text-bone">
                 {format({ amount: grandTotal, currency: total.currency })}
               </dd>
             </div>
           </dl>
 
-          <p className="editorial mt-8 text-sm leading-relaxed text-ink-soft">
+          <p className="prose-body mt-10 text-xs">
             Taxes, where applicable, are calculated by the fulfiller and shown on
             your invoice.
           </p>
@@ -480,14 +496,14 @@ function Field({
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? `${id}-error` : hint ? `${id}-hint` : undefined}
         onChange={(event) => onChange(event.target.value)}
-        className="field-input mt-2"
+        className="field-input mt-3"
       />
       {error ? (
-        <p id={`${id}-error`} className="mt-2 text-xs text-alert">
+        <p id={`${id}-error`} className="mt-3 font-mono text-xs text-alert">
           {error}
         </p>
       ) : hint ? (
-        <p id={`${id}-hint`} className="mt-2 text-xs text-ink-faint">
+        <p id={`${id}-hint`} className="label mt-3 text-bone-faint">
           {hint}
         </p>
       ) : null}

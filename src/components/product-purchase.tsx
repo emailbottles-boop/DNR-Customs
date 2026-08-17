@@ -60,13 +60,14 @@ export function ProductPurchase({ product }: { product: Product }) {
   }
 
   return (
-    <div className="mt-12 border-t border-rule pt-10">
-      <p className="text-lg font-light">
+    <div className="mt-10 border-t border-hairline pt-8">
+      {/* Price stays quiet and technical — the garment and the action shout. */}
+      <p className="label text-sm text-bone">
         {price ? format(price) : "Unavailable"}
       </p>
 
       {colors.length > 0 ? (
-        <fieldset className="mt-12">
+        <fieldset className="mt-10">
           <legend className="label">
             Colour{color ? ` — ${color}` : ""}
           </legend>
@@ -80,7 +81,7 @@ export function ProductPurchase({ product }: { product: Product }) {
                   disabled={!available}
                   aria-pressed={color === option}
                   onClick={() => setColor(option)}
-                  className="swatch px-5 py-3 text-[11px] uppercase tracking-[0.18em]"
+                  className="swatch px-5 py-3 uppercase"
                 >
                   {option}
                 </button>
@@ -91,7 +92,7 @@ export function ProductPurchase({ product }: { product: Product }) {
       ) : null}
 
       {sizes.length > 0 ? (
-        <fieldset className="mt-10">
+        <fieldset className="mt-8">
           <legend className="label">Size{size ? ` — ${size}` : ""}</legend>
           <div className="mt-4 flex flex-wrap gap-2">
             {sizes.map((option) => {
@@ -103,7 +104,7 @@ export function ProductPurchase({ product }: { product: Product }) {
                   disabled={!available}
                   aria-pressed={size === option}
                   onClick={() => setSize(option)}
-                  className="swatch min-w-16 px-5 py-3 text-[11px] uppercase tracking-[0.18em]"
+                  className="swatch min-w-16 px-5 py-3 uppercase"
                 >
                   {option}
                 </button>
@@ -113,17 +114,17 @@ export function ProductPurchase({ product }: { product: Product }) {
         </fieldset>
       ) : null}
 
-      <div className="mt-14 flex flex-col gap-3 sm:flex-row">
+      <div className="mt-12 flex flex-col gap-3 sm:flex-row">
         <button
           type="button"
           onClick={handleAdd}
           disabled={!canAdd}
-          className="btn btn-primary"
+          className="btn btn-primary flex-1"
         >
           {canAdd ? "Add to cart" : "Unavailable"}
         </button>
 
-        <Link href="/cart" className="btn btn-ghost">
+        <Link href="/cart" className="btn btn-ghost flex-1">
           {added ? "Added — view cart" : "View cart"}
         </Link>
       </div>
@@ -134,7 +135,7 @@ export function ProductPurchase({ product }: { product: Product }) {
       </p>
 
       {!canAdd && selected === undefined ? (
-        <p className="mt-1 text-xs text-ink-soft">
+        <p className="label mt-1 text-alert">
           That combination isn&apos;t made. Try another colour or size.
         </p>
       ) : null}

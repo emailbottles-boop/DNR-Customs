@@ -19,17 +19,19 @@ export default function Error({
   }, [error]);
 
   return (
-    <div className="mx-auto max-w-2xl px-5 py-32 text-center">
+    <div className="mx-auto max-w-3xl px-6 py-40 text-center sm:px-10">
       <p className="label">Something broke</p>
-      <h1 className="display mt-8 text-6xl sm:text-7xl">
-        We couldn&apos;t load that
+      <h1 className="display mt-10 text-7xl sm:text-8xl lg:text-9xl">
+        We couldn&apos;t
+        <br />
+        load that
       </h1>
-      <p className="mx-auto mt-10 max-w-md text-sm leading-relaxed text-ink-soft">
+      <p className="prose-body mx-auto mt-12 text-sm">
         This is usually temporary. Try again, and if it keeps happening the shop
         may be between catalog syncs.
       </p>
 
-      <div className="mt-14 flex flex-wrap justify-center gap-4">
+      <div className="mt-16 flex flex-wrap justify-center gap-4">
         <button type="button" onClick={reset} className="btn btn-primary">
           Try again
         </button>
@@ -39,8 +41,8 @@ export default function Error({
       </div>
 
       {error.digest ? (
-        <p className="mt-16 font-mono text-xs text-ink-faint">
-          Reference: {error.digest}
+        <p className="mt-20 border-t border-hairline pt-8 font-mono text-xs tracking-[0.2em] text-bone-faint uppercase">
+          Reference {error.digest}
         </p>
       ) : null}
     </div>
