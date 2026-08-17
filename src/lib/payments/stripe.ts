@@ -43,6 +43,20 @@ function encodeForm(
   return params;
 }
 
+/**
+ * Stripe fetches line-item images from its own servers, so only an absolute
+ * public URL is any use. The demo catalog's inline `data:` images and any
+ * localhost URL are dropped — sending them would make Stripe reject the whole
+ * session, turning a cosmetic nicety into a failed checkout.
+ */
+function publicImageUrl(image: string | null | undefined): string | null {
+  if (!image) return null;
+  if (!/^https?:\/\//i.test(image)) return null;
+  if (/^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:|\/|$)/i.test(image)) return null;
+  // Stripe caps the URL length; an overlong one fails the request.
+  return image.length <= 2048 ? image : null;
+}
+
 export const stripeProvider: PaymentProvider = {
   id: "stripe",
   label: "Card payment",
@@ -66,17 +80,22 @@ export const stripeProvider: PaymentProvider = {
       // Ties the Stripe session back to our order and Printful's external_id.
       client_reference_id: request.reference,
       metadata: { order_reference: request.reference },
-      line_items: request.lines.map((line) => ({
-        quantity: line.quantity,
-        price_data: {
-          currency: line.unitPrice.currency.toLowerCase(),
-          unit_amount: line.unitPrice.amount,
-          product_data: {
-            name: line.name,
-            ...(line.description ? { description: line.description } : {}),
+      line_items: request.lines.map((line) => {
+        const image = publicImageUrl(line.image);
+        return {
+          quantity: line.quantity,
+          price_data: {
+            currency: line.unitPrice.currency.toLowerCase(),
+            unit_amount: line.unitPrice.amount,
+            product_data: {
+              name: line.name,
+              ...(line.description ? { description: line.description } : {}),
+              // Stripe renders these beside each line on the payment page.
+              ...(image ? { images: [image] } : {}),
+            },
           },
-        },
-      })),
+        };
+      }),
     };
 
     // Free shipping is expressed by omitting the option, not by a zero rate.
@@ -123,4 +142,7 @@ export const stripeProvider: PaymentProvider = {
   },
 };
 
-export { encodeForm as __encodeFormForTests };
+export {
+  encodeForm as __encodeFormForTests,
+  publicImageUrl as __publicImageUrlForTests,
+};

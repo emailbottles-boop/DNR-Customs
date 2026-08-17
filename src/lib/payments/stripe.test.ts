@@ -1,5 +1,58 @@
 import { describe, expect, it } from "vitest";
-import { __encodeFormForTests as encodeForm } from "./stripe";
+import {
+  __encodeFormForTests as encodeForm,
+  __publicImageUrlForTests as publicImageUrl,
+} from "./stripe";
+
+/**
+ * Stripe fetches line-item images server-side, so an unusable URL doesn't just
+ * fail to render — it makes Stripe reject the session and the customer never
+ * reaches a payment page. The filter has to be strict.
+ */
+describe("publicImageUrl", () => {
+  it("passes through a public https URL", () => {
+    const url = "https://files.cdn.printful.com/files/abc/preview.png";
+    expect(publicImageUrl(url)).toBe(url);
+  });
+
+  it("allows plain http", () => {
+    expect(publicImageUrl("http://cdn.example.com/a.png")).toBe(
+      "http://cdn.example.com/a.png",
+    );
+  });
+
+  it("drops the demo catalog's inline data URIs", () => {
+    // The whole demo catalog uses these; sending one would break test checkouts.
+    expect(publicImageUrl("data:image/svg+xml;utf8,%3Csvg%3E")).toBeNull();
+  });
+
+  it("drops relative paths, which Stripe cannot resolve", () => {
+    expect(publicImageUrl("/images/tee.png")).toBeNull();
+    expect(publicImageUrl("images/tee.png")).toBeNull();
+  });
+
+  it("drops localhost URLs that Stripe's servers cannot reach", () => {
+    expect(publicImageUrl("http://localhost:3000/tee.png")).toBeNull();
+    expect(publicImageUrl("http://127.0.0.1:3000/tee.png")).toBeNull();
+    expect(publicImageUrl("http://[::1]:3000/tee.png")).toBeNull();
+  });
+
+  it("drops an over-long URL", () => {
+    expect(publicImageUrl(`https://cdn.test/${"a".repeat(2100)}.png`)).toBeNull();
+  });
+
+  it("handles absent images", () => {
+    expect(publicImageUrl(null)).toBeNull();
+    expect(publicImageUrl(undefined)).toBeNull();
+    expect(publicImageUrl("")).toBeNull();
+  });
+
+  it("is not fooled by a hostname that merely starts with localhost", () => {
+    expect(publicImageUrl("https://localhost.dnrcustoms.com/a.png")).toBe(
+      "https://localhost.dnrcustoms.com/a.png",
+    );
+  });
+});
 
 /**
  * Stripe's form encoding is the part of this integration most likely to break

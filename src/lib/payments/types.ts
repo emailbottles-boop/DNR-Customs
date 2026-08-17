@@ -12,6 +12,12 @@ export type PaymentLine = {
   description?: string;
   unitPrice: Money;
   quantity: number;
+  /**
+   * Product image shown on the payment page. Must be a publicly reachable URL —
+   * the payment provider fetches it from its own servers, so anything local or
+   * inlined is unusable and is dropped rather than sent.
+   */
+  image?: string | null;
 };
 
 export type PaymentRequest = {

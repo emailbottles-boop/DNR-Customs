@@ -250,11 +250,15 @@ export async function priceItems(items: OrderItemInput[]): Promise<{
     unitPrice: Money;
     productName: string;
     variantName: string;
+    image: string | null;
   }>;
   missing: number[];
 }> {
   const products = await listProducts();
-  const index = new Map<number, { product: Product; price: Money; name: string }>();
+  const index = new Map<
+    number,
+    { product: Product; price: Money; name: string; image: string | null }
+  >();
 
   for (const product of products) {
     for (const variant of product.variants) {
@@ -263,6 +267,8 @@ export async function priceItems(items: OrderItemInput[]): Promise<{
         product,
         price: variant.price,
         name: variant.name,
+        // Prefer the variant's own mockup; fall back to the product shot.
+        image: variant.image ?? product.thumbnail,
       });
     }
   }
@@ -282,6 +288,7 @@ export async function priceItems(items: OrderItemInput[]): Promise<{
       unitPrice: match.price,
       productName: match.product.name,
       variantName: match.name,
+      image: match.image,
     });
   }
 

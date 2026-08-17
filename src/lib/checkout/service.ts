@@ -113,6 +113,7 @@ export async function placeOrder(input: PlaceOrderInput) {
       description: line.variantName,
       unitPrice: line.unitPrice,
       quantity: line.quantity,
+      image: line.image,
     })),
     shipping,
     total,
