@@ -1,0 +1,77 @@
+import "server-only";
+
+/**
+ * Server-side configuration, read once from the environment.
+ *
+ * The storefront is designed to boot with *no* credentials at all: without a
+ * Printful token it serves a built-in demo catalog, and without Stripe keys it
+ * falls back to the manual payment provider. That keeps `npm run dev` working
+ * for anyone who clones the repo, and keeps the build green in CI.
+ */
+
+function optional(name: string): string | undefined {
+  const value = process.env[name]?.trim();
+  return value ? value : undefined;
+}
+
+const printfulToken = optional("PRINTFUL_API_KEY");
+const stripeSecret = optional("STRIPE_SECRET_KEY");
+
+const paymentProviderId = stripeSecret ? ("stripe" as const) : ("manual" as const);
+const autoConfirmRequested = optional("PRINTFUL_AUTO_CONFIRM") === "true";
+
+/**
+ * With Stripe, confirming an order is the webhook's job — it happens after the
+ * payment clears. Honouring auto-confirm as well would push orders into
+ * production the moment they are created, before anyone has paid, so the two
+ * settings are resolved here rather than trusted independently.
+ */
+const autoConfirmOrders =
+  paymentProviderId === "stripe" ? false : autoConfirmRequested;
+
+if (autoConfirmRequested && paymentProviderId === "stripe") {
+  console.warn(
+    "[config] PRINTFUL_AUTO_CONFIRM is ignored while Stripe is enabled: orders are confirmed by the Stripe webhook once payment clears.",
+  );
+}
+
+export const config = {
+  brand: {
+    name: "DNR Customs",
+    tagline: "Made to order, never to stock.",
+    email: optional("CONTACT_EMAIL") ?? "hello@dnrcustoms.com",
+  },
+
+  printful: {
+    token: printfulToken,
+    /** Required when the token is account-level rather than store-level. */
+    storeId: optional("PRINTFUL_STORE_ID"),
+    baseUrl: optional("PRINTFUL_API_URL") ?? "https://api.printful.com",
+    /** With no token we serve fixtures instead of failing to render. */
+    mode: printfulToken ? ("live" as const) : ("mock" as const),
+  },
+
+  payments: {
+    /**
+     * "stripe" once a secret key is present, otherwise "manual": the order is
+     * recorded as a draft in Printful and payment is arranged out of band.
+     */
+    provider: paymentProviderId,
+    stripeSecretKey: stripeSecret,
+    stripePublishableKey: optional("STRIPE_PUBLISHABLE_KEY"),
+    stripeWebhookSecret: optional("STRIPE_WEBHOOK_SECRET"),
+  },
+
+  /**
+   * Whether a newly created Printful order is confirmed for production
+   * immediately. Printful only charges and prints once an order is confirmed,
+   * so leaving this false means a bug in checkout costs nothing.
+   *
+   * Forced false under Stripe — see the resolution above.
+   */
+  autoConfirmOrders,
+
+  siteUrl: optional("NEXT_PUBLIC_SITE_URL") ?? "http://localhost:3000",
+} as const;
+
+export type AppConfig = typeof config;

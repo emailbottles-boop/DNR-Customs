@@ -1,0 +1,229 @@
+@import "tailwindcss";
+
+/**
+ * DNR Customs — editorial design system.
+ *
+ * The reference points are fashion houses and magazine spreads, not webshops:
+ * a warm paper ground, near-black ink, hairline rules, and no chromatic accent.
+ * Emphasis comes from scale, weight, and whitespace rather than colour, so the
+ * garments are the only saturated thing on the page.
+ *
+ * Committed to one light palette on purpose. An editorial identity that flips
+ * with the OS theme isn't an identity.
+ */
+:root {
+  /* Ground and ink */
+  --paper: #f7f5f0;
+  --paper-deep: #efece4;
+  --card: #fffefb;
+  --ink: #14120f;
+  --ink-soft: #6a655c;
+  --ink-faint: #9c968b;
+  --rule: #dcd6ca;
+  --rule-strong: #c3bcae;
+
+  /* Inverted blocks — used sparingly, for full-bleed editorial panels */
+  --inverse: #14120f;
+  --inverse-ink: #f7f5f0;
+
+  --alert: #8a3a2c;
+
+  /* Editorial rhythm */
+  --tracking-label: 0.22em;
+  --tracking-display: -0.02em;
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-paper-deep: var(--paper-deep);
+  --color-card: var(--card);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-faint: var(--ink-faint);
+  --color-rule: var(--rule);
+  --color-rule-strong: var(--rule-strong);
+  --color-inverse: var(--inverse);
+  --color-inverse-ink: var(--inverse-ink);
+  --color-alert: var(--alert);
+
+  --font-display: var(--font-cormorant);
+  --font-sans: var(--font-jost);
+
+  /* Square by default. Fashion doesn't round its corners. */
+  --radius-none: 0;
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-jost), ui-sans-serif, system-ui, sans-serif;
+  font-weight: 300;
+  /* Old-style figures read as typeset rather than tabulated. */
+  font-variant-numeric: oldstyle-nums;
+}
+
+/**
+ * Editorial primitives, declared in the components layer.
+ *
+ * The layer matters: Tailwind emits utilities in a later cascade layer, so
+ * anything here can be overridden by a utility at the call site. Defined
+ * unlayered, these class selectors would outrank every utility and force
+ * `!important` on any local adjustment.
+ */
+@layer components {
+  /* Wide-tracked uppercase micro-label: section marks, eyebrows, nav. */
+  .label {
+    font-family: var(--font-jost), sans-serif;
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-label);
+    font-size: 0.6875rem;
+    font-weight: 400;
+    color: var(--ink-soft);
+  }
+
+  /* The statement voice — high-contrast serif, set large and tight. */
+  .display {
+    font-family: var(--font-cormorant), Georgia, serif;
+    font-weight: 300;
+    letter-spacing: var(--tracking-display);
+    line-height: 0.98;
+  }
+
+  /* Italic serif for asides and pull quotes. */
+  .editorial {
+    font-family: var(--font-cormorant), Georgia, serif;
+    font-style: italic;
+    font-weight: 300;
+  }
+
+  /* Body copy at a comfortable measure. */
+  .prose-editorial {
+    max-width: 58ch;
+    line-height: 1.7;
+    color: var(--ink-soft);
+  }
+
+  /**
+   * Buttons. Two weights only: a solid ink block for the single primary action,
+   * and a hairline-ruled block for everything else.
+   */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem 2.25rem;
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-label);
+    font-weight: 400;
+    transition:
+      background-color 0.35s ease,
+      color 0.35s ease,
+      border-color 0.35s ease,
+      opacity 0.35s ease;
+  }
+
+  .btn-primary {
+    background: var(--ink);
+    color: var(--paper);
+    border: 1px solid var(--ink);
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    background: transparent;
+    color: var(--ink);
+  }
+
+  .btn-primary:disabled {
+    background: var(--rule);
+    border-color: var(--rule);
+    color: var(--ink-faint);
+    cursor: not-allowed;
+  }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--ink);
+    border: 1px solid var(--rule-strong);
+  }
+
+  .btn-ghost:hover:not(:disabled) {
+    border-color: var(--ink);
+  }
+
+  /**
+   * Understated link underline that draws itself on hover — the one piece of
+   * motion in the system.
+   */
+  .link-rule {
+    background-image: linear-gradient(currentColor, currentColor);
+    background-size: 0% 1px;
+    background-position: 0 100%;
+    background-repeat: no-repeat;
+    transition: background-size 0.4s ease;
+    padding-bottom: 2px;
+  }
+
+  .link-rule:hover {
+    background-size: 100% 1px;
+  }
+
+  /* Selected state for variant swatches: an ink rule, not a fill. */
+  .swatch {
+    border: 1px solid var(--rule-strong);
+    transition:
+      border-color 0.3s ease,
+      background-color 0.3s ease,
+      color 0.3s ease;
+  }
+
+  .swatch[aria-pressed="true"] {
+    border-color: var(--ink);
+    background: var(--ink);
+    color: var(--paper);
+  }
+
+  .swatch:disabled {
+    opacity: 0.3;
+    text-decoration: line-through;
+    cursor: not-allowed;
+  }
+
+  /* Editorial form fields: a baseline rule, no box. */
+  .field-input {
+    width: 100%;
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid var(--rule-strong);
+    padding: 0.6rem 0;
+    font-size: 0.9375rem;
+    font-weight: 300;
+    color: var(--ink);
+    transition: border-color 0.3s ease;
+  }
+
+  .field-input:focus {
+    outline: none;
+    border-bottom-color: var(--ink);
+  }
+
+  .field-input[aria-invalid="true"] {
+    border-bottom-color: var(--alert);
+  }
+}
+
+/* Focus ring for keyboard users, kept off the mouse path by :focus-visible. */
+:focus-visible {
+  outline: 1px solid var(--ink);
+  outline-offset: 3px;
+}
+
+/* Slow, deliberate image reveals; disabled for anyone who asked for less. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
