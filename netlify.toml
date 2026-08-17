@@ -13,10 +13,17 @@
   command = "npm run build"
 
 [build.environment]
-  # Next 16 and React 19 need Node 20 or newer. Netlify's default has moved
-  # before now; pinning means a platform default change can't break a build
-  # that was working the day before.
-  NODE_VERSION = "20"
+  # Next 16 declares engines.node ">=20.9.0" — note the .9. A bare "20" can
+  # resolve to an earlier 20.x and fail the build before it compiles anything,
+  # so this pins a major that is unambiguously above the floor. Verified: the
+  # production build passes on Node 22 from a clean install.
+  NODE_VERSION = "22"
+
+  # Do NOT set NODE_ENV=production as a build variable here or in the Netlify
+  # UI. Tailwind, PostCSS and TypeScript are devDependencies, and npm skips
+  # devDependencies under that flag — the install would succeed and the build
+  # would then fail on a missing tailwind. Netlify's default already builds
+  # with devDependencies installed.
 
 # Long-lived caching for the build's fingerprinted assets. Their filenames
 # change whenever the contents do, so they can be cached indefinitely.
