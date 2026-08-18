@@ -13,8 +13,6 @@ export function ProductCard({
 }) {
   const price = startingPrice(product);
   const inStock = isInStock(product);
-  // "from $X" only when variants actually differ in price.
-  const varies = new Set(product.variants.map((v) => v.price.amount)).size > 1;
 
   return (
     <Link
@@ -41,7 +39,7 @@ export function ProductCard({
         <h3 className="display-sub text-base text-bone">{product.name}</h3>
         {price ? (
           <p className="label shrink-0">
-            {varies ? `From ${format(price)}` : format(price)}
+            {format(price)}
           </p>
         ) : null}
       </div>

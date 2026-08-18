@@ -51,7 +51,6 @@ export default async function HomePage() {
   const price = startingPrice(drop);
   const inStock = isInStock(drop);
   // "From $X" only when the variants actually disagree on price.
-  const varies = new Set(drop.variants.map((variant) => variant.price.amount)).size > 1;
   const sizes = Array.from(
     new Set(
       drop.variants
@@ -99,7 +98,7 @@ export default async function HomePage() {
             <div className="lg:col-span-5">
               {price ? (
                 <p className="display-sub text-4xl sm:text-5xl">
-                  {varies ? `From ${format(price)}` : format(price)}
+                  {format(price)}
                 </p>
               ) : null}
 
