@@ -29,13 +29,15 @@ const plexMono = IBM_Plex_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(config.siteUrl),
   title: {
-    default: `${config.brand.name} — ${config.brand.tagline}`,
+    default: config.brand.name,
     template: `%s — ${config.brand.name}`,
   },
-  description: config.brand.tagline,
+  // Search-result text only; never rendered on the site.
+  description: "Drop 01. Long sleeve, made to order.",
   openGraph: {
     title: config.brand.name,
-    description: config.brand.tagline,
+    // Search-result text only; never rendered on the site.
+  description: "Drop 01. Long sleeve, made to order.",
     type: "website",
   },
 };

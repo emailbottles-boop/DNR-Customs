@@ -10,7 +10,6 @@ export function SiteFooter({ demoMode }: { demoMode: boolean }) {
           <p className="display text-4xl text-bone sm:text-6xl">
             D&amp;R Customs
           </p>
-          <p className="prose-body mt-6 text-sm">{config.brand.tagline}</p>
         </div>
 
         <div className="flex flex-col gap-4 sm:items-end">
