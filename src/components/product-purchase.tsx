@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useCart } from "./use-cart";
 import { format } from "@/lib/commerce/money";
-import { optionValues } from "@/lib/commerce/product";
+import { optionValues, selectColor, selectSize } from "@/lib/commerce/product";
 import type { Product, ProductVariant } from "@/lib/commerce/product";
 
 /**
@@ -49,6 +49,23 @@ export function ProductPurchase({ product }: { product: Product }) {
       (variant) => variant.color === candidate && variant.available,
     );
 
+  /**
+   * Choosing one axis reconciles the other. Without this, picking a colour
+   * that is not made in the current size strands the shopper on a combination
+   * that does not exist, and the buy button silently reads "Unavailable".
+   */
+  function chooseColor(next: string) {
+    const resolved = selectColor(product, next, size);
+    setColor(resolved.color);
+    setSize(resolved.size);
+  }
+
+  function chooseSize(next: string) {
+    const resolved = selectSize(product, next, color);
+    setColor(resolved.color);
+    setSize(resolved.size);
+  }
+
   const canAdd = Boolean(selected?.available);
   const price = selected?.price ?? firstAvailable?.price;
 
@@ -80,7 +97,7 @@ export function ProductPurchase({ product }: { product: Product }) {
                   type="button"
                   disabled={!available}
                   aria-pressed={color === option}
-                  onClick={() => setColor(option)}
+                  onClick={() => chooseColor(option)}
                   className="swatch px-5 py-3 uppercase"
                 >
                   {option}
@@ -103,7 +120,7 @@ export function ProductPurchase({ product }: { product: Product }) {
                   type="button"
                   disabled={!available}
                   aria-pressed={size === option}
-                  onClick={() => setSize(option)}
+                  onClick={() => chooseSize(option)}
                   className="swatch min-w-16 px-5 py-3 uppercase"
                 >
                   {option}

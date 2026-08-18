@@ -73,11 +73,15 @@ export const MOCK_PRODUCTS: Product[] = [
     variants: buildVariants(
       -1,
       4200,
-      // One colourway, matching the live drop. The real catalog comes from
+      // Two colourways, matching the live drop. The real catalog comes from
       // Printful; this only has to keep local development honest.
-      [{ name: "Black", swatch: "#141414" }],
-      // A realistic gap: the picker must handle a size that is not made.
-      [["Black", "2XL"]],
+      [
+        { name: "Black", swatch: "#141414" },
+        { name: "White", swatch: "#f2f0eb" },
+      ],
+      // Deliberately uneven: White is not made in 2XL. Without a gap like this
+      // the picker's cross-colour behaviour is never exercised locally.
+      [["White", "2XL"]],
     ),
   },
 ];
