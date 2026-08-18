@@ -107,10 +107,6 @@ export default async function ShopPage() {
 
         <h1 className="display mt-12 text-7xl sm:text-8xl lg:text-9xl">Shop</h1>
 
-        <p className="prose-body mt-10 text-sm">
-          One drop at a time. Each piece is made for the person who ordered it —
-          in their size, their colourway, and nobody else&apos;s.
-        </p>
       </header>
 
       {products.length === 0 ? (
