@@ -6,7 +6,6 @@ import { useCart } from "./use-cart";
 
 const NAV = [
   { href: "/shop", label: "Shop" },
-  { href: "/about", label: "About" },
 ];
 
 export function SiteHeader() {

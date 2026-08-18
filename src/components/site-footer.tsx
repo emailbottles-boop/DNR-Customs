@@ -3,7 +3,7 @@ import { config } from "@/lib/config";
 
 export function SiteFooter({ demoMode }: { demoMode: boolean }) {
   return (
-    <footer className="mt-32 border-t border-hairline">
+    <footer className="border-t border-hairline">
       <div className="mx-auto flex max-w-6xl flex-col gap-12 px-5 py-20 sm:flex-row sm:items-end sm:justify-between sm:gap-16 sm:px-8 sm:py-24">
         <div>
           {/* The wordmark is the graphic down here — set large and cropped tight. */}

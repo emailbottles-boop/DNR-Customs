@@ -44,11 +44,6 @@ export default async function HomePage() {
           {config.brand.name} runs one drop at a time and prints it to order.
           When the next one lands it will be here, in full, until it is done.
         </p>
-        <div className="mt-14 border-t border-hairline pt-10">
-          <Link href="/about" className="label link-rule text-bone">
-            How it&apos;s made
-          </Link>
-        </div>
       </section>
     );
   }
@@ -88,7 +83,7 @@ export default async function HomePage() {
             {drop.name}
           </h1>
 
-          <div className="mt-12 grid items-start gap-x-16 gap-y-12 pb-20 sm:mt-16 sm:pb-28 lg:grid-cols-12">
+          <div className="mt-12 grid items-start gap-x-16 gap-y-12 pb-20 sm:mt-16 sm:pb-24 lg:grid-cols-12 lg:items-center">
             <div className="lg:col-span-7">
               <div className="relative aspect-[4/5] overflow-hidden bg-surface">
                 <ProductImage
@@ -96,7 +91,7 @@ export default async function HomePage() {
                   alt={drop.name}
                   sizes="(min-width: 1024px) 58vw, 100vw"
                   priority
-                  className="transition-transform duration-[600ms] ease-out hover:scale-[1.03]"
+                  className="transition-transform duration-500 ease-out hover:scale-[1.03]"
                 />
               </div>
             </div>
@@ -135,9 +130,6 @@ export default async function HomePage() {
                 <Link href={`/shop/${drop.slug}`} className="btn btn-primary">
                   {inStock ? "Get it" : "View the piece"}
                 </Link>
-                <Link href="/about" className="label link-rule text-bone">
-                  How it&apos;s made
-                </Link>
               </div>
             </div>
           </div>
@@ -145,7 +137,7 @@ export default async function HomePage() {
       </section>
 
       {/* Spec sheet. Hairlines, mono, no boxes. */}
-      <section className="mx-auto max-w-6xl px-6 py-20 sm:px-10 sm:py-28">
+      <section className="mx-auto max-w-6xl px-6 py-16 sm:px-10 sm:py-20">
         <div className="grid gap-x-12 gap-y-12 sm:grid-cols-3">
           {NOTES.map((note, index) => (
             <div key={note.title} className="border-t border-hairline pt-6">
@@ -175,21 +167,6 @@ export default async function HomePage() {
         </section>
       ) : null}
 
-      {/* One held note on the deeper ground before the footer. */}
-      <section className="bg-void">
-        <div className="mx-auto max-w-6xl px-6 py-24 sm:px-10 sm:py-32">
-          <p className="label">The method</p>
-          <p className="display mt-10 max-w-4xl text-4xl sm:text-6xl lg:text-7xl">
-            We make none of it before someone asks for it.
-          </p>
-          <Link
-            href="/about"
-            className="label link-rule mt-14 inline-block text-bone"
-          >
-            Read the whole thing
-          </Link>
-        </div>
-      </section>
     </div>
   );
 }

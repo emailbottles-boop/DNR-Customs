@@ -39,7 +39,7 @@ export default async function ProductPage({ params }: PageProps<"/shop/[slug]">)
   const gallery = product.images.slice(1, 5);
 
   return (
-    <div className="mx-auto max-w-6xl px-5 pb-24 sm:px-8 sm:pb-32">
+    <div className="mx-auto max-w-6xl px-5 pb-16 sm:px-8 sm:pb-20">
       <div className="flex flex-wrap items-baseline justify-between gap-x-8 gap-y-2 border-b border-hairline py-6">
         <Link href="/shop" className="label link-rule">
           ← Back to shop
@@ -49,11 +49,11 @@ export default async function ProductPage({ params }: PageProps<"/shop/[slug]">)
 
       {/* The name is the graphic: set large across the full measure, cropped
           close, before the buying furniture starts. */}
-      <h1 className="display mt-14 text-6xl sm:mt-20 sm:text-8xl lg:text-9xl">
+      <h1 className="display mt-12 text-5xl sm:mt-16 sm:text-7xl lg:text-8xl">
         {product.name}
       </h1>
 
-      <div className="mt-16 grid gap-14 sm:mt-20 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] lg:gap-20">
+      <div className="mt-12 grid gap-14 sm:mt-16 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:gap-20">
         <div>
           <div className="relative aspect-[3/4] overflow-hidden bg-surface">
             <ProductImage
