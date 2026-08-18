@@ -14,7 +14,17 @@ import type { Product, ProductVariant } from "@/lib/commerce/product";
  * simply not exist. Rather than let someone pick an impossible combination and
  * fail at the end, unavailable options are disabled as the selection narrows.
  */
-export function ProductPurchase({ product }: { product: Product }) {
+export function ProductPurchase({
+  product,
+  showPrice = true,
+}: {
+  product: Product;
+  /**
+   * The home page sets the price as a display element above this block, so it
+   * suppresses the quiet one here rather than printing the same number twice.
+   */
+  showPrice?: boolean;
+}) {
   const { add } = useCart();
 
   const colors = useMemo(() => optionValues(product, "color"), [product]);
@@ -79,12 +89,14 @@ export function ProductPurchase({ product }: { product: Product }) {
   return (
     <div className="mt-10 border-t border-hairline pt-8">
       {/* Price stays quiet and technical — the garment and the action shout. */}
-      <p className="label text-sm text-bone">
-        {price ? format(price) : "Unavailable"}
-      </p>
+      {showPrice ? (
+        <p className="label text-sm text-bone">
+          {price ? format(price) : "Unavailable"}
+        </p>
+      ) : null}
 
       {colors.length > 0 ? (
-        <fieldset className="mt-10">
+        <fieldset className={showPrice ? "mt-10" : "mt-2"}>
           <legend className="label">
             Colour{color ? ` — ${color}` : ""}
           </legend>

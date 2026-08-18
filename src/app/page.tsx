@@ -1,14 +1,11 @@
 import Link from "next/link";
 import { ProductCard } from "@/components/product-card";
 import { ProductImage } from "@/components/product-image";
+import { ProductPurchase } from "@/components/product-purchase";
+import { PRINT_PLACEMENT } from "@/lib/commerce/copy";
 import { format } from "@/lib/commerce/money";
 import { isInStock, startingPrice } from "@/lib/commerce/product";
 import { listProducts } from "@/lib/printful/store";
-
-/**
- * The house notes, set as hairline-ruled columns rather than cards — a spec
- * sheet under the drop, not a row of feature boxes.
- */
 
 export default async function HomePage() {
   const products = await listProducts();
@@ -31,21 +28,6 @@ export default async function HomePage() {
 
   const price = startingPrice(drop);
   const inStock = isInStock(drop);
-  // "From $X" only when the variants actually disagree on price.
-  const sizes = Array.from(
-    new Set(
-      drop.variants
-        .map((variant) => variant.size)
-        .filter((size): size is string => Boolean(size)),
-    ),
-  );
-  const colours = Array.from(
-    new Set(
-      drop.variants
-        .map((variant) => variant.color)
-        .filter((colour): colour is string => Boolean(colour)),
-    ),
-  );
 
   return (
     <div>
@@ -63,7 +45,7 @@ export default async function HomePage() {
             {drop.name}
           </h1>
 
-          <div className="mt-12 grid items-start gap-x-16 gap-y-12 pb-20 sm:mt-16 sm:pb-24 lg:grid-cols-12 lg:items-center">
+          <div className="mt-12 grid items-start gap-x-16 gap-y-12 pb-20 sm:mt-16 sm:pb-24 lg:grid-cols-12">
             <div className="lg:col-span-7">
               <div className="relative aspect-[4/5] overflow-hidden bg-surface">
                 <ProductImage
@@ -87,30 +69,38 @@ export default async function HomePage() {
                 <p className="prose-body mt-8 text-sm">{drop.description}</p>
               ) : null}
 
+              {/*
+                The picker lives here rather than a page away. Buying used to
+                cost a click to /shop/[slug] before the shopper could touch a
+                size, and this shop sells one thing — the landing page is the
+                product page. Placement is stated before the picker for the
+                same reason it is there: the mockup is a front view, the print
+                is on the back, and nobody should choose a size without
+                knowing that.
+              */}
+              <p className="mt-8 flex gap-3 border-l-2 border-signal py-1 pl-4 text-sm text-bone">
+                <span className="label shrink-0 pt-0.5">Print</span>
+                <span>{PRINT_PLACEMENT}</span>
+              </p>
+
+              <ProductPurchase product={drop} showPrice={false} />
+
+              {/* Sizes and colourways are gone from here: the picker above is
+                  a better statement of both than a list repeating them. */}
               <dl className="mt-12 border-t border-hairline text-sm">
-                {sizes.length > 0 ? (
-                  <div className="flex gap-6 border-b border-hairline py-4">
-                    <dt className="label w-28 shrink-0 pt-1">Sizes</dt>
-                    <dd className="label text-bone">{sizes.join(" · ")}</dd>
-                  </div>
-                ) : null}
-                {colours.length > 0 ? (
-                  <div className="flex gap-6 border-b border-hairline py-4">
-                    <dt className="label w-28 shrink-0 pt-1">Colourways</dt>
-                    <dd className="label text-bone">{colours.join(" · ")}</dd>
-                  </div>
-                ) : null}
                 <div className="flex gap-6 border-b border-hairline py-4">
                   <dt className="label w-28 shrink-0 pt-1">Production</dt>
                   <dd className="label text-bone">2–5 working days</dd>
                 </div>
+                <div className="flex gap-6 border-b border-hairline py-4">
+                  <dt className="label w-28 shrink-0 pt-1">Details</dt>
+                  <dd className="label text-bone">
+                    <Link href={`/shop/${drop.slug}`} className="link-rule">
+                      Sizing, shipping, returns
+                    </Link>
+                  </dd>
+                </div>
               </dl>
-
-              <div className="mt-12 flex flex-wrap items-center gap-x-8 gap-y-4">
-                <Link href={`/shop/${drop.slug}`} className="btn btn-primary">
-                  {inStock ? "Get it" : "View the piece"}
-                </Link>
-              </div>
             </div>
           </div>
         </div>
