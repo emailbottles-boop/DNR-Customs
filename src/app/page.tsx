@@ -12,16 +12,16 @@ import { config } from "@/lib/config";
  */
 const NOTES = [
   {
-    title: "Printed to order",
-    body: "Nothing is made until someone buys it. No back stock, no markdown rail, no pallet burned at the end of the season.",
+    title: "Yours specifically",
+    body: "Nothing is made in advance. The piece that arrives was started because you asked for it, in the size and colourway you chose.",
   },
   {
     title: "Heavyweight blanks",
     body: "220gsm and up. Cloth picked to hold its shape and its colour through a hard rotation, not one summer.",
   },
   {
-    title: "Out in days",
-    body: "Two to five working days on the press, then the shortest route we can find to your door.",
+    title: "Worth the wait",
+    body: "A few days on the press, then the shortest route we can find to your door. Made properly takes longer than pulled off a shelf.",
   },
 ];
 

@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 const STEPS = [
   {
     title: "You order",
-    body: "Nothing exists in advance. Size, colourway and graphic are locked the second you check out — not six months earlier by someone guessing what would sell.",
+    body: "Size, colourway and graphic are settled the moment you check out. Nobody guessed on your behalf six months earlier.",
   },
   {
     title: "We print",
@@ -18,7 +18,7 @@ const STEPS = [
   },
   {
     title: "It ships",
-    body: "Two to five working days on the press, then out the door and usually domestic from there. Short run, short trip.",
+    body: "A few days on the press, then out the door and usually domestic from there. Short run, short trip.",
   },
 ];
 
@@ -37,7 +37,7 @@ export default function AboutPage() {
       <div className="grid gap-x-16 gap-y-12 pt-14 sm:grid-cols-12">
         <div className="sm:col-span-4 lg:col-span-3">
           <p className="label">Method</p>
-          <p className="label mt-3 text-bone">Print on demand</p>
+          <p className="label mt-3 text-bone">Made to order</p>
           <p className="label mt-8">Production</p>
           <p className="label mt-3 text-bone">2–5 working days</p>
           <p className="label mt-8">Runs</p>
@@ -46,16 +46,15 @@ export default function AboutPage() {
 
         <div className="sm:col-span-8 lg:col-span-9">
           <p className="display-sub max-w-2xl text-2xl sm:text-3xl">
-            No warehouse. No dead stock. No skip out back full of last
-            season&apos;s mistakes.
+            Nothing here exists until someone asks for it.
           </p>
 
           <div className="prose-body mt-10 space-y-6 text-sm">
             <p>
-              {config.brand.name} is made to order. Every piece starts as blank
-              heavyweight stock and only gets printed once someone has actually
-              asked for it, in the size and colourway they picked, at a press
-              near the address it is headed to.
+              {config.brand.name} works in drops, and a drop is finite. Nothing
+              is made ahead of time and nothing is made twice over — your piece
+              is cut, printed and finished for you, in the size and colourway
+              you chose, and then it goes to you.
             </p>
             <p>
               The trade is plain: a few days longer than something pulled off a

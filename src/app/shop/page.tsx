@@ -101,15 +101,15 @@ export default async function ShopPage() {
           <p className="label">{single ? "Drop 01" : "The line"}</p>
           <p className="label">
             {products.length} {products.length === 1 ? "piece" : "pieces"} ·
-            Printed to order
+            Made to order
           </p>
         </div>
 
         <h1 className="display mt-12 text-7xl sm:text-8xl lg:text-9xl">Shop</h1>
 
         <p className="prose-body mt-10 text-sm">
-          Nothing is warehoused. Every piece is cut and printed after the order
-          lands and ships in 2–7 business days.
+          One drop at a time. Each piece is made for the person who ordered it —
+          in their size, their colourway, and nobody else&apos;s.
         </p>
       </header>
 
