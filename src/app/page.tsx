@@ -4,26 +4,11 @@ import { ProductImage } from "@/components/product-image";
 import { format } from "@/lib/commerce/money";
 import { isInStock, startingPrice } from "@/lib/commerce/product";
 import { listProducts } from "@/lib/printful/store";
-import { config } from "@/lib/config";
 
 /**
  * The house notes, set as hairline-ruled columns rather than cards — a spec
  * sheet under the drop, not a row of feature boxes.
  */
-const NOTES = [
-  {
-    title: "Yours specifically",
-    body: "Nothing is made in advance. The piece that arrives was started because you asked for it, in the size and colourway you chose.",
-  },
-  {
-    title: "Heavyweight blanks",
-    body: "220gsm and up. Cloth picked to hold its shape and its colour through a hard rotation, not one summer.",
-  },
-  {
-    title: "Worth the wait",
-    body: "A few days on the press, then the shortest route we can find to your door. Made properly takes longer than pulled off a shelf.",
-  },
-];
 
 export default async function HomePage() {
   const products = await listProducts();
@@ -40,10 +25,6 @@ export default async function HomePage() {
           <br />
           live yet.
         </h1>
-        <p className="prose-body mt-10 text-sm">
-          {config.brand.name} runs one drop at a time and prints it to order.
-          When the next one lands it will be here, in full, until it is done.
-        </p>
       </section>
     );
   }
@@ -135,18 +116,6 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Spec sheet. Hairlines, mono, no boxes. */}
-      <section className="mx-auto max-w-6xl px-6 py-16 sm:px-10 sm:py-20">
-        <div className="grid gap-x-12 gap-y-12 sm:grid-cols-3">
-          {NOTES.map((note, index) => (
-            <div key={note.title} className="border-t border-hairline pt-6">
-              <p className="label">{String(index + 1).padStart(2, "0")}</p>
-              <h2 className="display-sub mt-6 text-xl">{note.title}</h2>
-              <p className="prose-body mt-4 text-sm">{note.body}</p>
-            </div>
-          ))}
-        </div>
-      </section>
 
       {/* Anything beyond the drop hero. Absent while the shop carries one piece. */}
       {rest.length > 0 ? (
