@@ -11,7 +11,14 @@ import type { Product, ProductVariant } from "./product";
  * because a stale or hand-edited entry is entirely possible.
  */
 
-export const MAX_QUANTITY_PER_LINE = 25;
+/**
+ * The whole order is capped, not just each line. This is a one-drop shop
+ * printed to order: a single buyer clearing out a drop would drain the float
+ * (Printful bills immediately, Stripe pays out days later), so nobody gets
+ * more than two garments in one order. Enforced again server-side in the
+ * checkout schema — this constant is the UI's copy of that rule.
+ */
+export const MAX_UNITS_PER_ORDER = 2;
 
 export type CartLine = {
   variantId: number;
@@ -49,9 +56,18 @@ export function subtotal(cart: Cart): Money {
   );
 }
 
-function clampQuantity(quantity: number): number {
+/** Units across every line except the one being changed. */
+function unitsInOtherLines(cart: Cart, variantId: number): number {
+  return cart.lines.reduce(
+    (total, line) =>
+      line.variantId === variantId ? total : total + line.quantity,
+    0,
+  );
+}
+
+function clampQuantity(quantity: number, allowance: number): number {
   if (!Number.isFinite(quantity)) return 1;
-  return Math.min(MAX_QUANTITY_PER_LINE, Math.max(1, Math.floor(quantity)));
+  return Math.min(allowance, Math.max(1, Math.floor(quantity)));
 }
 
 /**
@@ -65,15 +81,19 @@ export function addLine(
   variant: ProductVariant,
   quantity = 1,
 ): Cart {
-  const requested = clampQuantity(quantity);
+  // What this line may hold is whatever the rest of the cart hasn't used.
+  const allowance = MAX_UNITS_PER_ORDER - unitsInOtherLines(cart, variant.id);
+  if (allowance <= 0) return cart;
+
   const existing = cart.lines.find((line) => line.variantId === variant.id);
+  const requested = clampQuantity(quantity, allowance);
 
   if (existing) {
     return {
       ...cart,
       lines: cart.lines.map((line) =>
         line.variantId === variant.id
-          ? { ...line, quantity: clampQuantity(line.quantity + requested) }
+          ? { ...line, quantity: clampQuantity(line.quantity + requested, allowance) }
           : line,
       ),
     };
@@ -114,11 +134,13 @@ export function setQuantity(
   if (!Number.isFinite(quantity) || quantity <= 0) {
     return removeLine(cart, variantId);
   }
+  const allowance = MAX_UNITS_PER_ORDER - unitsInOtherLines(cart, variantId);
+  if (allowance <= 0) return removeLine(cart, variantId);
   return {
     ...cart,
     lines: cart.lines.map((line) =>
       line.variantId === variantId
-        ? { ...line, quantity: clampQuantity(quantity) }
+        ? { ...line, quantity: clampQuantity(quantity, allowance) }
         : line,
     ),
   };
@@ -154,10 +176,17 @@ export function parseCart(input: unknown): Cart {
   if (!Array.isArray(record.lines)) return emptyCart(currency);
 
   const lines: CartLine[] = [];
+  let budget = MAX_UNITS_PER_ORDER;
   for (const candidate of record.lines) {
     const line = parseLine(candidate, currency);
     // Reject lines in a different currency than the cart; they can't be summed.
-    if (line && line.unitPrice.currency === currency) lines.push(line);
+    if (!line || line.unitPrice.currency !== currency) continue;
+    // A stored cart predating the order cap must not resurrect more units
+    // than an order may hold now.
+    if (budget <= 0) break;
+    const quantity = Math.min(line.quantity, budget);
+    budget -= quantity;
+    lines.push({ ...line, quantity });
   }
 
   return { currency, lines };
@@ -192,6 +221,6 @@ function parseLine(input: unknown, currency: Currency): CartLine | null {
     variantName: typeof record.variantName === "string" ? record.variantName : "",
     unitPrice: money(amount, priceCurrency),
     image: typeof record.image === "string" ? record.image : null,
-    quantity: clampQuantity(quantity),
+    quantity: clampQuantity(quantity, MAX_UNITS_PER_ORDER),
   };
 }

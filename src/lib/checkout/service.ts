@@ -1,7 +1,7 @@
 import "server-only";
 import { add, format, multiply, zero } from "@/lib/commerce/money";
 import type { Money } from "@/lib/commerce/money";
-import { createOrder, getShippingOptions, priceItems } from "@/lib/printful/store";
+import { createOrder, getShippingOptions, priceItems, remainingUnits } from "@/lib/printful/store";
 import type { ShippingOption } from "@/lib/printful/store";
 import { paymentProvider } from "@/lib/payments";
 import type { MoneyJson } from "./schema";
@@ -79,6 +79,22 @@ export async function placeOrder(input: PlaceOrderInput) {
     );
   }
   if (lines.length === 0) throw new CheckoutError("Your cart is empty.");
+
+  // The drop cap, enforced at the moment of purchase. The catalog gate flips
+  // the shop to sold out for browsing, but two buyers can race the last unit;
+  // this check is what decides who gets it.
+  const remaining = await remainingUnits();
+  if (remaining !== null) {
+    const requested = lines.reduce((total, line) => total + line.quantity, 0);
+    if (requested > remaining) {
+      throw new CheckoutError(
+        remaining === 0
+          ? "This drop has sold out."
+          : `Only ${remaining} left in this drop — please reduce your order.`,
+        409,
+      );
+    }
+  }
 
   const subtotal = add(
     ...lines.map((line) => multiply(line.unitPrice, line.quantity)),

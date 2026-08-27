@@ -133,6 +133,8 @@ export const order = z.object({
   created: z.number().nullish(),
   costs: orderCosts.nullish(),
   retail_costs: orderCosts.nullish(),
+  /** Read only to count units sold against the drop cap. */
+  items: z.array(z.object({ quantity: z.number() })).optional(),
   // Anything else Printful sends is ignored rather than rejected.
 });
 

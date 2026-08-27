@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCart } from "@/components/use-cart";
 import { ProductImage } from "@/components/product-image";
-import { MAX_QUANTITY_PER_LINE } from "@/lib/commerce/cart";
+import { MAX_UNITS_PER_ORDER } from "@/lib/commerce/cart";
 import { format, multiply } from "@/lib/commerce/money";
 
 export default function CartPage() {
@@ -101,7 +101,7 @@ export default function CartPage() {
                     className="border border-hairline-lit bg-surface px-3 py-2 font-mono text-xs tabular-nums text-bone transition-colors hover:border-bone-soft"
                   >
                     {Array.from(
-                      { length: MAX_QUANTITY_PER_LINE },
+                      { length: MAX_UNITS_PER_ORDER },
                       (_, index) => index + 1,
                     ).map((quantity) => (
                       <option key={quantity} value={quantity}>

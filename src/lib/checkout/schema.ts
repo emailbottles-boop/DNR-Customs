@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { MAX_UNITS_PER_ORDER } from "@/lib/commerce/cart";
 
 /**
  * Request shapes for the checkout API, shared by the route handlers and the
@@ -28,12 +29,23 @@ export const recipientSchema = z.object({
 
 export const orderItemSchema = z.object({
   variantId: z.number().int(),
-  quantity: z.number().int().min(1).max(25),
+  quantity: z.number().int().min(1).max(MAX_UNITS_PER_ORDER),
 });
 
 export const shippingQuoteSchema = z.object({
   recipient: recipientSchema,
-  items: z.array(orderItemSchema).min(1, "Your cart is empty"),
+  items: z
+    .array(orderItemSchema)
+    .min(1, "Your cart is empty")
+    // The cap is per order, so it has to hold across lines, not just within
+    // one. The cart UI enforces the same rule; this is the copy that matters,
+    // because only this one binds a hand-crafted request.
+    .refine(
+      (items) =>
+        items.reduce((total, item) => total + item.quantity, 0) <=
+        MAX_UNITS_PER_ORDER,
+      { message: `Orders are limited to ${MAX_UNITS_PER_ORDER} items` },
+    ),
 });
 
 export const placeOrderSchema = shippingQuoteSchema.extend({

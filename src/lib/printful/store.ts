@@ -31,8 +31,75 @@ export function isDemoCatalog(): boolean {
   return isMock;
 }
 
+/**
+ * Orders that no longer count against the drop: never paid for, or undone.
+ * Drafts matter most — checkout creates one for every attempt, paid or not,
+ * so counting them would let abandoned carts close the shop.
+ */
+const NOT_SOLD_STATUSES = new Set(["draft", "failed", "canceled"]);
+
+/**
+ * Units actually sold, counted from Printful itself — the one ledger that
+ * exists without a database. Fails open (0): if the count cannot be read the
+ * shop keeps selling, because a Printful blip must not close the store, and
+ * the same blip would stop orders being placed anyway.
+ */
+export async function unitsSold(): Promise<number> {
+  if (isMock || config.dropCapUnits === null) return 0;
+
+  try {
+    const orders = await printfulRequest({
+      path: "/orders",
+      schema: z.array(orderSchema),
+      query: { limit: 100 },
+      // Short-lived: the count only has to be fresh enough to flip the shop
+      // to sold out within a minute of the last sale.
+      revalidate: 60,
+    });
+
+    let sold = 0;
+    for (const order of orders) {
+      if (NOT_SOLD_STATUSES.has(order.status)) continue;
+      for (const item of order.items ?? []) sold += item.quantity;
+    }
+    return sold;
+  } catch (error) {
+    console.error("[printful] could not count units sold:", error);
+    return 0;
+  }
+}
+
+/** Units still available under the cap, or null when uncapped. */
+export async function remainingUnits(): Promise<number | null> {
+  const cap = config.dropCapUnits;
+  if (cap === null) return null;
+  const sold = await unitsSold();
+  return Math.max(0, cap - sold);
+}
+
+/**
+ * A sold-out drop is expressed by marking every variant unavailable, so the
+ * whole surface — stock badges, pickers, re-pricing at checkout — reads the
+ * same answer without asking twice.
+ */
+async function applyDropCap(products: Product[]): Promise<Product[]> {
+  const remaining = await remainingUnits();
+  if (remaining === null || remaining > 0) return products;
+  return products.map((product) => ({
+    ...product,
+    variants: product.variants.map((variant) => ({
+      ...variant,
+      available: false,
+    })),
+  }));
+}
+
 export async function listProducts(): Promise<Product[]> {
   if (isMock) return MOCK_PRODUCTS;
+  return applyDropCap(await listProductsUncapped());
+}
+
+async function listProductsUncapped(): Promise<Product[]> {
 
   const summaries = await printfulRequest({
     path: "/store/products",
@@ -73,7 +140,9 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
   if (id === null) return null;
 
   try {
-    return await fetchProductDetail(id);
+    const product = await fetchProductDetail(id);
+    if (!product) return null;
+    return (await applyDropCap([product]))[0];
   } catch (error) {
     // A slug pointing at a deleted product should 404, not 500.
     if (error instanceof PrintfulError && error.status === 404) return null;

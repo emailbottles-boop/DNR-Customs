@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useCart } from "./use-cart";
+import { MAX_UNITS_PER_ORDER, itemCount } from "@/lib/commerce/cart";
 import { format } from "@/lib/commerce/money";
 import { optionValues, selectColor, selectSize } from "@/lib/commerce/product";
 import type { Product, ProductVariant } from "@/lib/commerce/product";
@@ -25,7 +26,9 @@ export function ProductPurchase({
    */
   showPrice?: boolean;
 }) {
-  const { add } = useCart();
+  const { add, cart, ready } = useCart();
+  // Suppressed until hydration so server and first client render agree.
+  const atOrderCap = ready && itemCount(cart) >= MAX_UNITS_PER_ORDER;
 
   const colors = useMemo(() => optionValues(product, "color"), [product]);
   const sizes = useMemo(() => optionValues(product, "size"), [product]);
@@ -76,7 +79,7 @@ export function ProductPurchase({
     setSize(resolved.size);
   }
 
-  const canAdd = Boolean(selected?.available);
+  const canAdd = Boolean(selected?.available) && !atOrderCap;
   const price = selected?.price ?? firstAvailable?.price;
 
   function handleAdd() {
@@ -150,7 +153,11 @@ export function ProductPurchase({
           disabled={!canAdd}
           className="btn btn-primary flex-1"
         >
-          {canAdd ? "Add to cart" : "Unavailable"}
+          {atOrderCap
+            ? `Limit ${MAX_UNITS_PER_ORDER} per order`
+            : canAdd
+              ? "Add to cart"
+              : "Unavailable"}
         </button>
 
         <Link href="/cart" className="btn btn-ghost flex-1">

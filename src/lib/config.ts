@@ -14,6 +14,17 @@ function optional(name: string): string | undefined {
   return value ? value : undefined;
 }
 
+/** A positive integer or nothing; a garbled value must not close the shop. */
+function parseCap(value: string | undefined): number | null {
+  if (!value) return null;
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    console.warn(`[config] ignoring DROP_CAP_UNITS=${JSON.stringify(value)}; expected a positive integer.`);
+    return null;
+  }
+  return parsed;
+}
+
 const printfulToken = optional("PRINTFUL_API_KEY");
 const stripeSecret = optional("STRIPE_SECRET_KEY");
 
@@ -85,6 +96,15 @@ export const config = {
    * Forced false under Stripe — see the resolution above.
    */
   autoConfirmOrders,
+
+  /**
+   * Total units the current drop will sell before the shop closes itself.
+   *
+   * Printful bills for printing the moment an order confirms, while Stripe
+   * pays sales out days later — so a burst of orders is paid for out of the
+   * owner's float. The cap bounds that exposure. Unset means uncapped.
+   */
+  dropCapUnits: parseCap(optional("DROP_CAP_UNITS")),
 
   siteUrl: optional("NEXT_PUBLIC_SITE_URL") ?? "http://localhost:3000",
 } as const;

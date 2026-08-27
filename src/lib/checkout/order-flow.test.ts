@@ -30,6 +30,8 @@ type Call = { url: string; method: string; body: string; headers: Record<string,
 let calls: Call[] = [];
 /** Status Printful reports for the draft when the webhook looks it up. */
 let draftStatus = "draft";
+/** Orders GET /orders reports, for the drop-cap count. */
+let existingOrders: Array<{ status: string; quantity: number }> = [];
 
 function envelope(result: unknown, code = 200) {
   return new Response(JSON.stringify({ code, result }), {
@@ -83,8 +85,17 @@ function installFetchStub() {
     if (url.includes("/orders/@")) {
       return envelope({ id: PRINTFUL_ORDER_ID, external_id: "REF", status: draftStatus, shipping: "STANDARD" });
     }
-    if (url.startsWith(`${PRINTFUL_BASE}/orders`)) {
+    if (url.startsWith(`${PRINTFUL_BASE}/orders`) && method === "POST") {
       return envelope({ id: PRINTFUL_ORDER_ID, external_id: "REF", status: "draft", shipping: "STANDARD" });
+    }
+    if (url.startsWith(`${PRINTFUL_BASE}/orders`) && method === "GET") {
+      return envelope(
+        existingOrders.map((order, index) => ({
+          id: 9000 + index,
+          status: order.status,
+          items: [{ quantity: order.quantity }],
+        })),
+      );
     }
     if (url.startsWith("https://api.stripe.com/v1/checkout/sessions")) {
       return new Response(
@@ -103,6 +114,7 @@ async function boot(env: Record<string, string>) {
   return {
     service: await import("./service"),
     webhook: await import("@/app/api/webhooks/stripe/route"),
+    store: await import("@/lib/printful/store"),
   };
 }
 
@@ -129,6 +141,7 @@ const RECIPIENT = {
 beforeEach(() => {
   calls = [];
   draftStatus = "draft";
+  existingOrders = [];
   installFetchStub();
 });
 
@@ -333,6 +346,76 @@ describe("a real order, from cart to a confirmed Printful order", () => {
 
     expect(await response.json()).toEqual({ received: true, confirmed: false, testMode: true });
     expect(find(/\/confirm$/)).toBeUndefined();
+  });
+
+  it("closes the shop when the drop cap is reached", async () => {
+    // Two units already sold against a cap of two: the catalog reads sold out
+    // and an order for one more is refused before any draft is created.
+    existingOrders = [
+      { status: "pending", quantity: 1 },
+      { status: "fulfilled", quantity: 1 },
+    ];
+    const { service, store } = await boot({ ...LIVE_ENV, DROP_CAP_UNITS: "2" });
+
+    const products = await store.listProducts();
+    expect(products[0].variants.every((variant) => !variant.available)).toBe(true);
+
+    await expect(
+      service.placeOrder({
+        recipient: RECIPIENT,
+        items: [{ variantId: SYNC_VARIANT_ID, quantity: 1 }],
+        shippingOptionId: "STANDARD",
+      }),
+    ).rejects.toThrow(/no longer available|sold out/i);
+    expect(find(new RegExp(`/orders(\\?|$)`), "POST")).toBeUndefined();
+  });
+
+  it("refuses an order for more units than the drop has left", async () => {
+    // One sold of two: the shop is still open, but a two-unit order overdraws.
+    existingOrders = [{ status: "pending", quantity: 1 }];
+    const { service } = await boot({ ...LIVE_ENV, DROP_CAP_UNITS: "2" });
+
+    await expect(
+      service.placeOrder({
+        recipient: RECIPIENT,
+        items: [{ variantId: SYNC_VARIANT_ID, quantity: 2 }],
+        shippingOptionId: "STANDARD",
+      }),
+    ).rejects.toThrow(/Only 1 left/);
+
+    // A one-unit order still goes through.
+    const result = await service.placeOrder({
+      recipient: RECIPIENT,
+      items: [{ variantId: SYNC_VARIANT_ID, quantity: 1 }],
+      shippingOptionId: "STANDARD",
+    });
+    expect(result.totals.subtotal.amount).toBe(2500);
+  });
+
+  it("does not count drafts against the cap", async () => {
+    // Ten abandoned checkouts left ten drafts. None were paid; the shop stays open.
+    existingOrders = Array.from({ length: 10 }, () => ({ status: "draft", quantity: 1 }));
+    const { service } = await boot({ ...LIVE_ENV, DROP_CAP_UNITS: "2" });
+
+    const result = await service.placeOrder({
+      recipient: RECIPIENT,
+      items: [{ variantId: SYNC_VARIANT_ID, quantity: 1 }],
+      shippingOptionId: "STANDARD",
+    });
+    expect(result.redirectUrl).toContain("stripe.com");
+  });
+
+  it("rejects an order of more than two units at the API boundary", async () => {
+    // Three units split across two lines: each line is legal, the sum is not.
+    const { placeOrderSchema } = await import("./schema");
+    const parsed = placeOrderSchema.safeParse({
+      recipient: RECIPIENT,
+      items: [
+        { variantId: SYNC_VARIANT_ID, quantity: 2 },
+        { variantId: SYNC_VARIANT_ID + 1, quantity: 1 },
+      ],
+    });
+    expect(parsed.success).toBe(false);
   });
 
   it("fails closed when the webhook secret is missing", async () => {
