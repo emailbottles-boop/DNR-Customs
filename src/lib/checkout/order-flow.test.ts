@@ -32,6 +32,13 @@ let calls: Call[] = [];
 let draftStatus = "draft";
 /** Orders GET /orders reports, for the drop-cap count. */
 let existingOrders: Array<{ status: string; quantity: number }> = [];
+/** Checkout sessions Stripe's list endpoint reports, for the admin view. */
+let stripeSessions: Array<{
+  client_reference_id: string;
+  payment_status: string;
+  amount_total: number;
+  currency: string;
+}> = [];
 
 function envelope(result: unknown, code = 200) {
   return new Response(JSON.stringify({ code, result }), {
@@ -98,6 +105,12 @@ function installFetchStub() {
       );
     }
     if (url.startsWith("https://api.stripe.com/v1/checkout/sessions")) {
+      if (method === "GET") {
+        return new Response(JSON.stringify({ data: stripeSessions }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
       return new Response(
         JSON.stringify({ id: "cs_test_123", url: "https://checkout.stripe.com/c/pay/cs_test_123" }),
         { status: 200, headers: { "Content-Type": "application/json" } },
@@ -115,6 +128,8 @@ async function boot(env: Record<string, string>) {
     service: await import("./service"),
     webhook: await import("@/app/api/webhooks/stripe/route"),
     store: await import("@/lib/printful/store"),
+    adminAuth: await import("@/lib/admin/auth"),
+    adminConfirm: await import("@/app/api/admin/confirm/route"),
   };
 }
 
@@ -142,6 +157,7 @@ beforeEach(() => {
   calls = [];
   draftStatus = "draft";
   existingOrders = [];
+  stripeSessions = [];
   installFetchStub();
 });
 
@@ -463,6 +479,81 @@ describe("a real order, from cart to a confirmed Printful order", () => {
       preorder: true,
     });
     expect(find(/\/confirm$/)).toBeUndefined();
+  });
+
+  it("admin confirm: refuses without a session, refuses unpaid, confirms paid", async () => {
+    stripeSessions = [
+      { client_reference_id: "DNR-PAID", payment_status: "paid", amount_total: 2999, currency: "usd" },
+      { client_reference_id: "DNR-UNPAID", payment_status: "unpaid", amount_total: 2999, currency: "usd" },
+    ];
+    const { adminAuth, adminConfirm } = await boot({
+      ...LIVE_ENV,
+      ADMIN_PASSWORD: "a-long-admin-password",
+      PREORDER_MODE: "true",
+    });
+
+    const post = (reference: string, cookie?: string) =>
+      adminConfirm.POST(
+        new Request("https://dnrcustoms.store/api/admin/confirm", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(cookie ? { cookie } : {}),
+          },
+          body: JSON.stringify({ reference }),
+        }),
+      );
+
+    // No cookie: turned away before anything is looked up.
+    expect((await post("DNR-PAID")).status).toBe(401);
+
+    const cookie = `dnr_admin=${encodeURIComponent(adminAuth.createSessionToken())}`;
+
+    // Paid but Stripe says unpaid — the button's own page can't override this.
+    const unpaid = await post("DNR-UNPAID", cookie);
+    expect(unpaid.status).toBe(409);
+
+    // Reference Stripe has never heard of.
+    expect((await post("DNR-NEVER-PAID", cookie)).status).toBe(409);
+    expect(find(/\/confirm$/)).toBeUndefined();
+
+    // Paid draft: confirmed.
+    const confirmed = await post("DNR-PAID", cookie);
+    expect(confirmed.status).toBe(200);
+    expect(find(/\/orders\/\d+\/confirm$/, "POST")).toBeDefined();
+  });
+
+  it("admin confirm refuses to run on test keys", async () => {
+    stripeSessions = [
+      { client_reference_id: "DNR-PAID", payment_status: "paid", amount_total: 2999, currency: "usd" },
+    ];
+    const { adminAuth, adminConfirm } = await boot({
+      ...LIVE_ENV,
+      STRIPE_SECRET_KEY: "sk_test_fake",
+      ADMIN_PASSWORD: "a-long-admin-password",
+    });
+    const cookie = `dnr_admin=${encodeURIComponent(adminAuth.createSessionToken())}`;
+    const response = await adminConfirm.POST(
+      new Request("https://dnrcustoms.store/api/admin/confirm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", cookie },
+        body: JSON.stringify({ reference: "DNR-PAID" }),
+      }),
+    );
+    expect(response.status).toBe(409);
+    expect(find(/\/confirm$/)).toBeUndefined();
+  });
+
+  it("admin surface does not exist without a password", async () => {
+    const { adminConfirm } = await boot(LIVE_ENV);
+    const response = await adminConfirm.POST(
+      new Request("https://dnrcustoms.store/api/admin/confirm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reference: "DNR-ANY" }),
+      }),
+    );
+    expect(response.status).toBe(404);
   });
 
   it("fails closed when the webhook secret is missing", async () => {

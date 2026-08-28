@@ -117,6 +117,12 @@ export const config = {
    */
   preorderMode: optional("PREORDER_MODE") === "true",
 
+  /**
+   * Password for /admin. Unset means the whole admin surface is disabled —
+   * the routes 404 rather than sit behind an empty password.
+   */
+  adminPassword: optional("ADMIN_PASSWORD"),
+
   siteUrl: optional("NEXT_PUBLIC_SITE_URL") ?? "http://localhost:3000",
 } as const;
 
