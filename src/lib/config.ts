@@ -106,6 +106,17 @@ export const config = {
    */
   dropCapUnits: parseCap(optional("DROP_CAP_UNITS")),
 
+  /**
+   * Pre-order mode: keep selling past the drop cap, but stop confirming.
+   *
+   * Payment still happens up front; the Printful order is left as a draft
+   * instead of being confirmed by the webhook, so nothing is printed or
+   * billed until the owner confirms each draft by hand in Printful's
+   * dashboard — once the Stripe payouts have arrived to fund the Wallet.
+   * The storefront discloses the delay before anyone pays.
+   */
+  preorderMode: optional("PREORDER_MODE") === "true",
+
   siteUrl: optional("NEXT_PUBLIC_SITE_URL") ?? "http://localhost:3000",
 } as const;
 

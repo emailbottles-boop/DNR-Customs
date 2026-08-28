@@ -21,3 +21,11 @@
  */
 export const PRINT_PLACEMENT =
   "Logo is printed on the back. The front is blank.";
+
+/**
+ * Shown wherever a buyer can commit to a pre-order, and appended to the line
+ * description Stripe renders on the payment page. Nobody should pay without
+ * having read this — a paid pre-order is a debt until it ships.
+ */
+export const PREORDER_NOTICE =
+  "Pre-order. Printed and shipped once the drop closes — allow up to 3 weeks.";

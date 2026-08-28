@@ -7,6 +7,7 @@ import { paymentProvider } from "@/lib/payments";
 import type { MoneyJson } from "./schema";
 import type { PlaceOrderInput, RecipientInput } from "./schema";
 import { config } from "@/lib/config";
+import { PREORDER_NOTICE } from "@/lib/commerce/copy";
 
 /**
  * Checkout orchestration: price the cart, quote shipping, create the order,
@@ -83,7 +84,7 @@ export async function placeOrder(input: PlaceOrderInput) {
   // The drop cap, enforced at the moment of purchase. The catalog gate flips
   // the shop to sold out for browsing, but two buyers can race the last unit;
   // this check is what decides who gets it.
-  const remaining = await remainingUnits();
+  const remaining = config.preorderMode ? null : await remainingUnits();
   if (remaining !== null) {
     const requested = lines.reduce((total, line) => total + line.quantity, 0);
     if (requested > remaining) {
@@ -128,7 +129,11 @@ export async function placeOrder(input: PlaceOrderInput) {
     email: input.recipient.email,
     lines: lines.map((line) => ({
       name: line.productName,
-      description: line.variantName,
+      // The payment page is the last thing a buyer reads before paying, so
+      // the pre-order delay is restated there, not only on the storefront.
+      description: config.preorderMode
+        ? `${line.variantName} — ${PREORDER_NOTICE}`
+        : line.variantName,
       unitPrice: line.unitPrice,
       quantity: line.quantity,
       image: line.image,

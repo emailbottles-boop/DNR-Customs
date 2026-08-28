@@ -2,7 +2,8 @@ import Link from "next/link";
 import { ProductCard } from "@/components/product-card";
 import { ProductImage } from "@/components/product-image";
 import { ProductPurchase } from "@/components/product-purchase";
-import { PRINT_PLACEMENT } from "@/lib/commerce/copy";
+import { PREORDER_NOTICE, PRINT_PLACEMENT } from "@/lib/commerce/copy";
+import { config } from "@/lib/config";
 import { format } from "@/lib/commerce/money";
 import { isInStock, startingPrice } from "@/lib/commerce/product";
 import { listProducts } from "@/lib/printful/store";
@@ -28,6 +29,7 @@ export default async function HomePage() {
 
   const price = startingPrice(drop);
   const inStock = isInStock(drop);
+  const preorder = config.preorderMode;
 
   return (
     <div>
@@ -37,7 +39,11 @@ export default async function HomePage() {
           <div className="flex flex-wrap items-baseline justify-between gap-x-8 gap-y-2 border-b border-hairline py-5">
             <p className="label text-bone">Drop 01</p>
             <p className="label">
-              {inStock ? "Live — printed to order" : "Sold out"}
+              {preorder
+                ? "Pre-order — open"
+                : inStock
+                  ? "Live — printed to order"
+                  : "Sold out"}
             </p>
           </div>
 
@@ -83,7 +89,14 @@ export default async function HomePage() {
                 <span>{PRINT_PLACEMENT}</span>
               </p>
 
-              <ProductPurchase product={drop} showPrice={false} />
+              {preorder ? (
+                <p className="mt-4 flex gap-3 border-l-2 border-signal py-1 pl-4 text-sm text-bone">
+                  <span className="label shrink-0 pt-0.5">Timing</span>
+                  <span>{PREORDER_NOTICE}</span>
+                </p>
+              ) : null}
+
+              <ProductPurchase product={drop} showPrice={false} preorder={preorder} />
 
               {/* Sizes and colourways are gone from here: the picker above is
                   a better statement of both than a list repeating them. */}

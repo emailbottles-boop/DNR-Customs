@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { PRINT_PLACEMENT } from "@/lib/commerce/copy";
+import { PREORDER_NOTICE, PRINT_PLACEMENT } from "@/lib/commerce/copy";
+import { config } from "@/lib/config";
 import { ProductImage } from "@/components/product-image";
 import { ProductPurchase } from "@/components/product-purchase";
 import { getProductBySlug, listProducts } from "@/lib/printful/store";
@@ -98,7 +99,14 @@ export default async function ProductPage({ params }: PageProps<"/shop/[slug]">)
             <span>{PRINT_PLACEMENT}</span>
           </p>
 
-          <ProductPurchase product={product} />
+          {config.preorderMode ? (
+            <p className="mt-4 flex gap-3 border-l-2 border-signal py-1 pl-4 text-sm text-bone">
+              <span className="label shrink-0 pt-0.5">Timing</span>
+              <span>{PREORDER_NOTICE}</span>
+            </p>
+          ) : null}
+
+          <ProductPurchase product={product} preorder={config.preorderMode} />
 
           <dl className="mt-16 border-t border-hairline text-sm">
             <div className="flex gap-6 border-b border-hairline py-4">

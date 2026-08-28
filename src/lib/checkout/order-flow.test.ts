@@ -418,6 +418,53 @@ describe("a real order, from cart to a confirmed Printful order", () => {
     expect(parsed.success).toBe(false);
   });
 
+  it("pre-order mode sells past the cap but never confirms", async () => {
+    // The drop is fully sold; pre-order keeps the shop open anyway.
+    existingOrders = [{ status: "pending", quantity: 2 }];
+    const { service, webhook, store } = await boot({
+      ...LIVE_ENV,
+      DROP_CAP_UNITS: "2",
+      PREORDER_MODE: "true",
+    });
+
+    const products = await store.listProducts();
+    expect(products[0].variants.some((variant) => variant.available)).toBe(true);
+
+    const result = await service.placeOrder({
+      recipient: RECIPIENT,
+      items: [{ variantId: SYNC_VARIANT_ID, quantity: 1 }],
+      shippingOptionId: "STANDARD",
+    });
+    expect(result.redirectUrl).toContain("stripe.com");
+
+    // The buyer is told on the payment page itself.
+    const form = new URLSearchParams(find(/api\.stripe\.com/, "POST")!.body);
+    expect(
+      form.get("line_items[0][price_data][product_data][description]"),
+    ).toMatch(/Pre-order/);
+
+    // Payment clears — and the draft stays a draft for manual confirmation.
+    const payload = JSON.stringify({
+      id: "evt_pre",
+      type: "checkout.session.completed",
+      data: { object: { client_reference_id: result.reference, payment_status: "paid" } },
+    });
+    const t = Math.floor(Date.now() / 1000);
+    const response = await webhook.POST(
+      new Request("https://dnrcustoms.store/api/webhooks/stripe", {
+        method: "POST",
+        headers: { "stripe-signature": `t=${t},v1=${signPayload(payload, "whsec_fake_for_tests", t)}` },
+        body: payload,
+      }),
+    );
+    expect(await response.json()).toEqual({
+      received: true,
+      confirmed: false,
+      preorder: true,
+    });
+    expect(find(/\/confirm$/)).toBeUndefined();
+  });
+
   it("fails closed when the webhook secret is missing", async () => {
     const env = { ...LIVE_ENV } as Record<string, string>;
     delete env.STRIPE_WEBHOOK_SECRET;

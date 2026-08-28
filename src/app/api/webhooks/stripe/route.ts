@@ -135,6 +135,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ received: true, confirmed: false, testMode: true });
   }
 
+  /**
+   * Pre-order mode: the money is real and verified, but confirmation is
+   * deliberately manual. The draft waits in Printful until the owner funds
+   * the Wallet and confirms it from the dashboard. Acknowledged with 200 so
+   * Stripe does not retry — retrying would change nothing.
+   */
+  if (config.preorderMode) {
+    console.info(
+      `[webhooks/stripe] PRE-ORDER — ${reference} is paid and left as a draft. Confirm it in Printful when funded.`,
+    );
+    return NextResponse.json({ received: true, confirmed: false, preorder: true });
+  }
+
   try {
     const outcome = await confirmOrderByReference(reference);
 

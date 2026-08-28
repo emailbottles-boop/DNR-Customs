@@ -18,8 +18,11 @@ import type { Product, ProductVariant } from "@/lib/commerce/product";
 export function ProductPurchase({
   product,
   showPrice = true,
+  preorder = false,
 }: {
   product: Product;
+  /** True when the shop is taking pre-orders; changes the button's promise. */
+  preorder?: boolean;
   /**
    * The home page sets the price as a display element above this block, so it
    * suppresses the quiet one here rather than printing the same number twice.
@@ -156,7 +159,9 @@ export function ProductPurchase({
           {atOrderCap
             ? `Limit ${MAX_UNITS_PER_ORDER} per order`
             : canAdd
-              ? "Add to cart"
+              ? preorder
+                ? "Pre-order"
+                : "Add to cart"
               : "Unavailable"}
         </button>
 

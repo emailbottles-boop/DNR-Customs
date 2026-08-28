@@ -83,6 +83,9 @@ export async function remainingUnits(): Promise<number | null> {
  * same answer without asking twice.
  */
 async function applyDropCap(products: Product[]): Promise<Product[]> {
+  // Pre-orders sell past the cap by design; the cap resumes when the mode
+  // is switched off.
+  if (config.preorderMode) return products;
   const remaining = await remainingUnits();
   if (remaining === null || remaining > 0) return products;
   return products.map((product) => ({
