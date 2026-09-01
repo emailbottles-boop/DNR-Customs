@@ -199,8 +199,10 @@ function parseLine(input: unknown, currency: Currency): CartLine | null {
   const variantId = Number(record.variantId);
   const productId = Number(record.productId);
   const quantity = Number(record.quantity);
-  if (!Number.isInteger(variantId) || variantId <= 0) return null;
-  if (!Number.isInteger(productId) || productId <= 0) return null;
+  // Ids may be negative: the demo catalog signs its ids that way on purpose
+  // (see printful/mock.ts), so only a non-integer or a zero id is corrupt.
+  if (!Number.isInteger(variantId) || variantId === 0) return null;
+  if (!Number.isInteger(productId) || productId === 0) return null;
   if (!Number.isFinite(quantity) || quantity <= 0) return null;
 
   const price = record.unitPrice as Record<string, unknown> | undefined;
