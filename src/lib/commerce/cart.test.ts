@@ -59,7 +59,7 @@ describe("addLine", () => {
 
   it("merges quantity when the same variant is added twice, up to the cap", () => {
     let cart = addLine(emptyCart(), tee, tee.variants[0], 1);
-    cart = addLine(cart, tee, tee.variants[0], 3);
+    cart = addLine(cart, tee, tee.variants[0], MAX_UNITS_PER_ORDER + 1);
     expect(cart.lines).toHaveLength(1);
     expect(cart.lines[0].quantity).toBe(MAX_UNITS_PER_ORDER);
   });
@@ -76,8 +76,8 @@ describe("addLine", () => {
   });
 
   it("caps the order across lines, not just within one", () => {
-    // Two units of one size uses the whole budget; another size won't fit.
-    let cart = addLine(emptyCart(), tee, tee.variants[0], 2);
+    // One size using the whole budget leaves no room for another size.
+    let cart = addLine(emptyCart(), tee, tee.variants[0], MAX_UNITS_PER_ORDER);
     cart = addLine(cart, tee, tee.variants[1], 1);
     expect(cart.lines).toHaveLength(1);
     expect(itemCount(cart)).toBe(MAX_UNITS_PER_ORDER);
@@ -85,9 +85,9 @@ describe("addLine", () => {
 
   it("splits the budget between sizes", () => {
     let cart = addLine(emptyCart(), tee, tee.variants[0], 1);
-    cart = addLine(cart, tee, tee.variants[1], 5);
+    cart = addLine(cart, tee, tee.variants[1], MAX_UNITS_PER_ORDER + 3);
     expect(cart.lines).toHaveLength(2);
-    expect(cart.lines[1].quantity).toBe(1);
+    expect(cart.lines[1].quantity).toBe(MAX_UNITS_PER_ORDER - 1);
     expect(itemCount(cart)).toBe(MAX_UNITS_PER_ORDER);
   });
 
@@ -132,7 +132,7 @@ describe("subtotal", () => {
 
 describe("setQuantity and removeLine", () => {
   it("updates a line quantity, bounded by the order cap", () => {
-    const cart = setQuantity(addLine(emptyCart(), tee, tee.variants[0]), 11, 4);
+    const cart = setQuantity(addLine(emptyCart(), tee, tee.variants[0]), 11, MAX_UNITS_PER_ORDER + 2);
     expect(cart.lines[0].quantity).toBe(MAX_UNITS_PER_ORDER);
     const two = setQuantity(addLine(emptyCart(), tee, tee.variants[0]), 11, 2);
     expect(two.lines[0].quantity).toBe(2);
@@ -258,7 +258,7 @@ describe("parseCart", () => {
     });
     const parsed = parseCart({
       currency: "USD",
-      lines: [line(11, 2), line(12, 2), line(13, 1)],
+      lines: [line(11, MAX_UNITS_PER_ORDER), line(12, MAX_UNITS_PER_ORDER), line(13, 1)],
     });
     expect(parsed.lines.reduce((n, l) => n + l.quantity, 0)).toBe(
       MAX_UNITS_PER_ORDER,

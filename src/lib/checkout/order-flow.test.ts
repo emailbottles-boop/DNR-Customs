@@ -465,13 +465,14 @@ describe("a real order, from cart to a confirmed Printful order", () => {
     expect(result.redirectUrl).toContain("stripe.com");
   });
 
-  it("rejects an order of more than two units at the API boundary", async () => {
-    // Three units split across two lines: each line is legal, the sum is not.
+  it("rejects an order past the per-order cap at the API boundary", async () => {
+    // One unit over, split across two lines: each line is legal, the sum is not.
     const { placeOrderSchema } = await import("./schema");
+    const { MAX_UNITS_PER_ORDER } = await import("@/lib/commerce/cart");
     const parsed = placeOrderSchema.safeParse({
       recipient: RECIPIENT,
       items: [
-        { variantId: SYNC_VARIANT_ID, quantity: 2 },
+        { variantId: SYNC_VARIANT_ID, quantity: MAX_UNITS_PER_ORDER },
         { variantId: SYNC_VARIANT_ID + 1, quantity: 1 },
       ],
     });
