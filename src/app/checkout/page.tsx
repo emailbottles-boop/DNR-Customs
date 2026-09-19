@@ -230,6 +230,9 @@ export default function CheckoutPage() {
       <header className="border-b border-hairline py-24 sm:py-28">
         <p className="label">Step 2 of 2</p>
         <h1 className="display mt-6 text-7xl sm:text-8xl">Checkout</h1>
+        <Link href="/cart" className="label link-rule mt-8 inline-block">
+          ← Back to cart
+        </Link>
       </header>
 
       <div className="grid gap-16 py-16 lg:grid-cols-[1fr_320px] lg:gap-24 lg:py-20">

@@ -65,8 +65,15 @@ export function parseVariantOptions(variant: SyncVariant): {
 }
 
 function variantImage(variant: SyncVariant): string | null {
-  const preview = variant.files?.find((file) => file.preview_url)?.preview_url;
-  return preview ?? variant.product?.image ?? null;
+  const files = variant.files ?? [];
+  // The print lives on the back, so prefer the back-placement mockup. Only then
+  // fall back to whatever preview Printful lists first (usually the blank front)
+  // and finally the plain catalog shot.
+  const backPreview = files.find(
+    (file) => file.preview_url && /back/i.test(file.type ?? ""),
+  )?.preview_url;
+  const anyPreview = files.find((file) => file.preview_url)?.preview_url;
+  return backPreview ?? anyPreview ?? variant.product?.image ?? null;
 }
 
 /**
@@ -123,18 +130,28 @@ export function toProduct(
   // Nothing sellable means nothing to show.
   if (variants.length === 0) return null;
 
+  // The variant mockups are where the artwork shows (and now favour the back),
+  // so they lead the gallery and the hero. Printful's own thumbnail is a blank
+  // front, so it trails as a last resort. One back per colour keeps the gallery
+  // varied rather than repeating a size.
+  const variantImages = variants
+    .map((variant) => variant.image)
+    .filter((image): image is string => Boolean(image));
   const images = [
-    syncProduct.thumbnail_url,
-    ...variants.map((variant) => variant.image),
-  ].filter((image): image is string => Boolean(image));
+    ...new Set(
+      [...variantImages, syncProduct.thumbnail_url].filter(
+        (image): image is string => Boolean(image),
+      ),
+    ),
+  ];
 
   return {
     id: syncProduct.id,
     slug: buildSlug(syncProduct.name, syncProduct.id),
     name: syncProduct.name,
     description: syncProduct.description?.trim() || null,
-    thumbnail: syncProduct.thumbnail_url ?? images[0] ?? null,
-    images: [...new Set(images)],
+    thumbnail: images[0] ?? null,
+    images,
     variants,
   };
 }

@@ -132,6 +132,16 @@ describe("toVariant", () => {
     expect(toVariant(syncVariant(), "USD")?.image).toBe("https://cdn.test/p.png");
   });
 
+  it("prefers the back-placement mockup when there is one", () => {
+    const variant = syncVariant({
+      files: [
+        { id: 1, type: "front", preview_url: "https://cdn.test/front.png" },
+        { id: 2, type: "back", preview_url: "https://cdn.test/back.png" },
+      ],
+    });
+    expect(toVariant(variant, "USD")?.image).toBe("https://cdn.test/back.png");
+  });
+
   it("falls back to the catalog image when no preview exists", () => {
     expect(toVariant(syncVariant({ files: [] }), "USD")?.image).toBe(
       "https://cdn.test/catalog.png",
@@ -205,16 +215,33 @@ describe("toProduct", () => {
     expect(product.description).toBeNull();
   });
 
-  it("de-duplicates images", () => {
+  it("de-duplicates images, variant mockups first and the thumbnail last", () => {
     const product = toProduct(
       detail({
         sync_variants: [syncVariant(), syncVariant({ id: 4002 })],
       }),
     )!;
     expect(product.images).toEqual([
-      "https://cdn.test/thumb.png",
       "https://cdn.test/p.png",
+      "https://cdn.test/thumb.png",
     ]);
+  });
+
+  it("leads the hero with a back mockup, not the blank-front thumbnail", () => {
+    const product = toProduct(
+      detail({
+        sync_variants: [
+          syncVariant({
+            files: [
+              { id: 1, type: "front", preview_url: "https://cdn.test/front.png" },
+              { id: 2, type: "back", preview_url: "https://cdn.test/back.png" },
+            ],
+          }),
+        ],
+      }),
+    )!;
+    expect(product.thumbnail).toBe("https://cdn.test/back.png");
+    expect(product.images[0]).toBe("https://cdn.test/back.png");
   });
 });
 
