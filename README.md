@@ -129,13 +129,40 @@ The order of operations is deliberate:
 A failure anywhere before step 3 leaves an inert draft rather than an unpaid
 garment in production.
 
+### When step 3 happens is a choice
+
+Printful bills you for printing the moment an order confirms. Stripe pays a
+sale out to your bank days after the charge. Confirm on the charge and you
+front every print run for those days; confirm on the payout and the customer's
+money is in the bank before Printful charges you a cent. Three settings:
+
+| Setting | Confirms when | Who fronts the printing |
+| --- | --- | --- |
+| *(default)* | the card is charged | you, for a few days |
+| `CONFIRM_ON_PAYOUT=true` | Stripe pays the money out to your bank | nobody |
+| `PREORDER_MODE=true` | you click confirm in `/admin` | nobody |
+
+Confirm-on-payout is the one to run when the account can't carry a float.
+Each `payout.paid` event names the payout; the webhook asks Stripe which
+charges it swept up, follows each back to its order, and confirms them. Orders
+ship a few days later than they otherwise would, and the checkout page says
+so. Charges refunded or disputed before the payout are skipped, not printed.
+If a confirm fails mid-batch — Printful down, or Printful's own billing
+declined — the webhook returns 5xx, Stripe retries for days, and each retry
+only has the failures left to do. An order that outlasts even that is still a
+paid draft in `/admin` with a confirm button. Nothing is lost, and nothing is
+printed before it has been paid for in full.
+
+Pre-order mode is stricter still and wins if both are set.
+
 ## Turning on Stripe
 
 1. Set `STRIPE_SECRET_KEY`. Checkout switches from invoicing to Stripe Checkout
    on the next boot — no code change.
 2. Add a webhook endpoint in the Stripe dashboard pointing at
    `https://your-domain/api/webhooks/stripe`, subscribed to
-   **`checkout.session.completed`**.
+   **`checkout.session.completed`** — and to **`payout.paid`** as well if you
+   run with `CONFIRM_ON_PAYOUT=true`, since that is the event that confirms.
 3. Copy that endpoint's signing secret into `STRIPE_WEBHOOK_SECRET`.
 
 Test it locally with the Stripe CLI:
@@ -143,6 +170,7 @@ Test it locally with the Stripe CLI:
 ```bash
 stripe listen --forward-to localhost:3000/api/webhooks/stripe
 stripe trigger checkout.session.completed
+stripe trigger payout.paid            # confirm-on-payout
 ```
 
 The webhook verifies Stripe's signature over the raw request body, rejects
@@ -211,8 +239,9 @@ serverless functions. `netlify.toml` only pins the Node version and caching.
 
 4. Trigger a redeploy so the build picks up the variables.
 5. In Stripe, add a webhook endpoint at
-   `https://your-site/api/webhooks/stripe` for `checkout.session.completed`,
-   and put its signing secret into `STRIPE_WEBHOOK_SECRET`.
+   `https://your-site/api/webhooks/stripe` for `checkout.session.completed`
+   (plus `payout.paid` if `CONFIRM_ON_PAYOUT` is on), and put its signing
+   secret into `STRIPE_WEBHOOK_SECRET`.
 
 Free tier limits are 100 GB bandwidth and 300 build minutes a month — far
 beyond a new shop. Every push to `main` redeploys.
@@ -263,7 +292,8 @@ you connected.
 
 **5. Point Stripe at the deployed URL.** In the Stripe dashboard add a webhook
 endpoint at `https://your-domain/api/webhooks/stripe` for
-`checkout.session.completed`, then put *that* endpoint's signing secret into
+`checkout.session.completed` (plus `payout.paid` if `CONFIRM_ON_PAYOUT` is
+on), then put *that* endpoint's signing secret into
 the `stripeWebhookSecret` secret. It differs from the one `stripe listen` gives
 you locally.
 

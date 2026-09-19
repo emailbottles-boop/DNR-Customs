@@ -46,6 +46,27 @@ if (autoConfirmRequested && paymentProviderId === "stripe") {
   );
 }
 
+const preorderMode = optional("PREORDER_MODE") === "true";
+const confirmOnPayoutRequested = optional("CONFIRM_ON_PAYOUT") === "true";
+
+/**
+ * Pre-order mode is the stricter of the two holds — every confirm is a human
+ * act — so it wins when both are set, rather than the webhook quietly
+ * confirming a batch the owner expected to review.
+ */
+const confirmOnPayout = confirmOnPayoutRequested && !preorderMode;
+
+if (confirmOnPayoutRequested && preorderMode) {
+  console.warn(
+    "[config] CONFIRM_ON_PAYOUT is ignored while PREORDER_MODE is on: drafts wait for a manual confirm.",
+  );
+}
+if (confirmOnPayoutRequested && paymentProviderId !== "stripe") {
+  console.warn(
+    "[config] CONFIRM_ON_PAYOUT has no effect without Stripe: payouts are a Stripe event.",
+  );
+}
+
 export const config = {
   brand: {
     name: "D&R Customs",
@@ -115,7 +136,23 @@ export const config = {
    * dashboard — once the Stripe payouts have arrived to fund the Wallet.
    * The storefront discloses the delay before anyone pays.
    */
-  preorderMode: optional("PREORDER_MODE") === "true",
+  preorderMode,
+
+  /**
+   * Confirm-on-payout: the webhook confirms an order only once Stripe has
+   * paid that order's money into the bank, not when the card is charged.
+   *
+   * Printful bills for printing the moment an order confirms. Stripe pays a
+   * sale out days after the charge. Confirming on the charge therefore has
+   * the owner fronting every print run out of their own pocket for those
+   * days; confirming on the payout means the customer's money is already in
+   * the account that pays Printful. Orders ship a few days later. Nothing is
+   * ever printed on credit.
+   *
+   * Needs the webhook endpoint subscribed to `payout.paid` as well as the
+   * checkout events. Off by default: the webhook confirms on payment.
+   */
+  confirmOnPayout,
 
   /**
    * Password for /admin. Unset means the whole admin surface is disabled —
