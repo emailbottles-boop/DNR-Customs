@@ -104,7 +104,7 @@ export function ProductPurchase({
       {colors.length > 0 ? (
         <fieldset className={showPrice ? "mt-10" : "mt-2"}>
           <legend className="label">
-            Colour{color ? ` — ${color}` : ""}
+            Color{color ? ` — ${color}` : ""}
           </legend>
           <div className="mt-4 flex flex-wrap gap-2">
             {colors.map((option) => {
@@ -177,7 +177,7 @@ export function ProductPurchase({
 
       {!canAdd && selected === undefined ? (
         <p className="label mt-1 text-alert">
-          That combination isn&apos;t made. Try another colour or size.
+          That combination isn&apos;t made. Try another color or size.
         </p>
       ) : null}
     </div>

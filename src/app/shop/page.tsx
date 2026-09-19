@@ -65,7 +65,7 @@ function DropFeature({ product }: { product: Product }) {
               ) : null}
               {colors.length > 0 ? (
                 <div className="flex gap-6 border-b border-hairline py-4">
-                  <dt className="label w-28 shrink-0 pt-0.5">Colourways</dt>
+                  <dt className="label w-28 shrink-0 pt-0.5">Colorways</dt>
                   <dd className="label text-bone">{colors.join(" / ")}</dd>
                 </div>
               ) : null}
