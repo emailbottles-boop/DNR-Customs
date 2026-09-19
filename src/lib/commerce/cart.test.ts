@@ -195,6 +195,28 @@ describe("parseCart", () => {
     expect(parsed.lines[0].variantId).toBe(12);
   });
 
+  it("keeps a demo line, whose ids are negative by design", () => {
+    const parsed = parseCart({
+      currency: "USD",
+      lines: [
+        { variantId: -101, productId: -1, quantity: 1, unitPrice: { amount: 4200 } },
+      ],
+    });
+    expect(parsed.lines).toHaveLength(1);
+    expect(parsed.lines[0].variantId).toBe(-101);
+  });
+
+  it("still drops a line with a zero id", () => {
+    const parsed = parseCart({
+      currency: "USD",
+      lines: [
+        { variantId: 0, productId: 1, quantity: 1, unitPrice: { amount: 100 } },
+        { variantId: 11, productId: 0, quantity: 1, unitPrice: { amount: 100 } },
+      ],
+    });
+    expect(parsed.lines).toHaveLength(0);
+  });
+
   it("drops lines whose currency does not match the cart", () => {
     const parsed = parseCart({
       currency: "USD",
