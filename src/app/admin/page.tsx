@@ -52,7 +52,11 @@ export default async function AdminPage() {
         <div>
           <p className="label">Mode</p>
           <p className="mt-1 text-sm text-bone">
-            {config.preorderMode ? "Pre-order — drafts held for manual confirm" : "Instant — webhook confirms on payment"}
+            {config.preorderMode
+              ? "Pre-order — drafts held for manual confirm"
+              : config.confirmOnPayout
+                ? "On payout — webhook confirms once Stripe pays the money out"
+                : "Instant — webhook confirms on payment"}
           </p>
         </div>
         <div>

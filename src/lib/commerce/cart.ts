@@ -12,13 +12,14 @@ import type { Product, ProductVariant } from "./product";
  */
 
 /**
- * The whole order is capped, not just each line. This is a one-drop shop
- * printed to order: a single buyer clearing out a drop would drain the float
- * (Printful bills immediately, Stripe pays out days later), so nobody gets
- * more than two garments in one order. Enforced again server-side in the
- * checkout schema — this constant is the UI's copy of that rule.
+ * The whole order is capped, not just each line. Not a float guard any more —
+ * confirm-on-payout means nothing prints until the money is in the bank, so a
+ * big order is simply a big order. What remains is a sanity ceiling: a fat-
+ * fingered 999 is an order the shop would then have to honour, and a genuine
+ * bulk buyer is better served by email than by a cart. Enforced again
+ * server-side in the checkout schema — this constant is the UI's copy of it.
  */
-export const MAX_UNITS_PER_ORDER = 2;
+export const MAX_UNITS_PER_ORDER = 25;
 
 export type CartLine = {
   variantId: number;

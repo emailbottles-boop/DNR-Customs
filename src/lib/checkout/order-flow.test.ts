@@ -39,6 +39,16 @@ let stripeSessions: Array<{
   amount_total: number;
   currency: string;
 }> = [];
+/** Charges Stripe reports inside a payout, for confirm-on-payout. */
+let payoutCharges: Array<{
+  id: string;
+  metadata?: Record<string, string>;
+  refunded?: boolean;
+}> = [];
+/** References whose Printful confirm call should fail, to exercise retries. */
+let confirmFailsFor: Set<string> = new Set();
+/** Reference Printful reports for the draft when the webhook looks it up. */
+let lookedUp: string[] = [];
 
 function envelope(result: unknown, code = 200) {
   return new Response(JSON.stringify({ code, result }), {
@@ -87,10 +97,16 @@ function installFetchStub() {
       ]);
     }
     if (url.match(/\/orders\/\d+\/confirm$/)) {
-      return envelope({ id: PRINTFUL_ORDER_ID, external_id: "REF", status: "pending", shipping: "STANDARD" });
+      const last = lookedUp.at(-1) ?? "";
+      if (confirmFailsFor.has(last)) {
+        return new Response(JSON.stringify({ code: 500, result: "Printful is having a moment" }), { status: 500 });
+      }
+      return envelope({ id: PRINTFUL_ORDER_ID, external_id: last, status: "pending", shipping: "STANDARD" });
     }
     if (url.includes("/orders/@")) {
-      return envelope({ id: PRINTFUL_ORDER_ID, external_id: "REF", status: draftStatus, shipping: "STANDARD" });
+      const reference = decodeURIComponent(url.split("/orders/@")[1]);
+      lookedUp.push(reference);
+      return envelope({ id: PRINTFUL_ORDER_ID, external_id: reference, status: draftStatus, shipping: "STANDARD" });
     }
     if (url.startsWith(`${PRINTFUL_BASE}/orders`) && method === "POST") {
       return envelope({ id: PRINTFUL_ORDER_ID, external_id: "REF", status: "draft", shipping: "STANDARD" });
@@ -102,6 +118,15 @@ function installFetchStub() {
           status: order.status,
           items: [{ quantity: order.quantity }],
         })),
+      );
+    }
+    if (url.startsWith("https://api.stripe.com/v1/balance_transactions")) {
+      return new Response(
+        JSON.stringify({
+          data: payoutCharges.map((c) => ({ id: `txn_${c.id}`, type: "charge", source: { object: "charge", ...c } })),
+          has_more: false,
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
       );
     }
     if (url.startsWith("https://api.stripe.com/v1/checkout/sessions")) {
@@ -158,8 +183,24 @@ beforeEach(() => {
   draftStatus = "draft";
   existingOrders = [];
   stripeSessions = [];
+  payoutCharges = [];
+  confirmFailsFor = new Set();
+  lookedUp = [];
   installFetchStub();
 });
+
+/** Signs and posts an event to the webhook, the way Stripe would. */
+async function deliver(webhook: { POST: (request: Request) => Promise<Response> }, event: unknown) {
+  const payload = JSON.stringify(event);
+  const t = Math.floor(Date.now() / 1000);
+  return webhook.POST(
+    new Request("https://dnrcustoms.store/api/webhooks/stripe", {
+      method: "POST",
+      headers: { "stripe-signature": `t=${t},v1=${signPayload(payload, "whsec_fake_for_tests", t)}` },
+      body: payload,
+    }),
+  );
+}
 
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -211,6 +252,9 @@ describe("a real order, from cart to a confirmed Printful order", () => {
     expect(form.get("line_items[0][quantity]")).toBe("2");
     expect(form.get("shipping_options[0][shipping_rate_data][fixed_amount][amount]")).toBe("499");
     expect(form.get("client_reference_id")).toBe(result.reference);
+    // Stamped on the PaymentIntent too, which Stripe copies to the charge —
+    // the only thread a payout can be followed back along.
+    expect(form.get("payment_intent_data[metadata][order_reference]")).toBe(result.reference);
     expect(form.get("success_url")).toBe(
       "https://dnrcustoms.store/checkout/confirmed?session_id={CHECKOUT_SESSION_ID}",
     );
@@ -421,13 +465,14 @@ describe("a real order, from cart to a confirmed Printful order", () => {
     expect(result.redirectUrl).toContain("stripe.com");
   });
 
-  it("rejects an order of more than two units at the API boundary", async () => {
-    // Three units split across two lines: each line is legal, the sum is not.
+  it("rejects an order past the per-order cap at the API boundary", async () => {
+    // One unit over, split across two lines: each line is legal, the sum is not.
     const { placeOrderSchema } = await import("./schema");
+    const { MAX_UNITS_PER_ORDER } = await import("@/lib/commerce/cart");
     const parsed = placeOrderSchema.safeParse({
       recipient: RECIPIENT,
       items: [
-        { variantId: SYNC_VARIANT_ID, quantity: 2 },
+        { variantId: SYNC_VARIANT_ID, quantity: MAX_UNITS_PER_ORDER },
         { variantId: SYNC_VARIANT_ID + 1, quantity: 1 },
       ],
     });
@@ -571,6 +616,137 @@ describe("a real order, from cart to a confirmed Printful order", () => {
     );
 
     expect(response.status).toBe(500);
+    expect(find(/\/confirm$/)).toBeUndefined();
+  });
+});
+
+describe("confirm on payout: nothing prints until the money is in the bank", () => {
+  const PAYOUT_ENV = { ...LIVE_ENV, CONFIRM_ON_PAYOUT: "true" };
+
+  it("holds a paid order as a draft when the card is charged", async () => {
+    const { service, webhook } = await boot(PAYOUT_ENV);
+    const { reference } = await service.placeOrder({
+      recipient: RECIPIENT,
+      items: [{ variantId: SYNC_VARIANT_ID, quantity: 1 }],
+      shippingOptionId: "STANDARD",
+    });
+
+    const response = await deliver(webhook, {
+      id: "evt_p1",
+      type: "checkout.session.completed",
+      data: { object: { id: "cs_p1", client_reference_id: reference, payment_status: "paid" } },
+    });
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ received: true, confirmed: false, heldForPayout: true });
+    // Paid, verified, and deliberately not confirmed: Printful is never asked.
+    expect(find(/\/confirm$/)).toBeUndefined();
+  });
+
+  it("confirms every order in a payout once it has been paid", async () => {
+    payoutCharges = [
+      { id: "ch_1", metadata: { order_reference: "DNR-ONE" } },
+      { id: "ch_2", metadata: { order_reference: "DNR-TWO" } },
+      // Refunded before the payout: the customer has their money back.
+      { id: "ch_3", metadata: { order_reference: "DNR-REFUNDED" }, refunded: true },
+    ];
+    const { webhook } = await boot(PAYOUT_ENV);
+
+    const response = await deliver(webhook, {
+      id: "evt_p2",
+      type: "payout.paid",
+      data: { object: { id: "po_1", object: "payout", status: "paid", amount: 10998, currency: "usd" } },
+    });
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ received: true, confirmed: true, orders: ["DNR-ONE", "DNR-TWO"] });
+    // Read the payout's charges, looked up each order, confirmed the two paid ones.
+    expect(find(/balance_transactions\?payout=po_1/)).toBeDefined();
+    expect(lookedUp).toEqual(["DNR-ONE", "DNR-TWO"]);
+    expect(calls.filter((c) => /\/confirm$/.test(c.url))).toHaveLength(2);
+  });
+
+  it("asks Stripe to retry when one confirm fails, without re-confirming the rest", async () => {
+    payoutCharges = [
+      { id: "ch_a", metadata: { order_reference: "DNR-FINE" } },
+      { id: "ch_b", metadata: { order_reference: "DNR-BROKEN" } },
+    ];
+    confirmFailsFor = new Set(["DNR-BROKEN"]);
+    const { webhook } = await boot(PAYOUT_ENV);
+
+    const first = await deliver(webhook, {
+      id: "evt_p3",
+      type: "payout.paid",
+      data: { object: { id: "po_2", object: "payout" } },
+    });
+    expect(first.status).toBe(503);
+    expect(await first.json()).toEqual({
+      error: "Could not confirm every order.",
+      confirmed: ["DNR-FINE"],
+      failed: ["DNR-BROKEN"],
+    });
+
+    // Stripe retries. Printful now says DNR-FINE is past draft, and DNR-BROKEN
+    // confirms this time. Nothing is confirmed twice.
+    calls = [];
+    confirmFailsFor = new Set();
+    draftStatus = "pending";
+    const retry = await deliver(webhook, {
+      id: "evt_p3",
+      type: "payout.paid",
+      data: { object: { id: "po_2", object: "payout" } },
+    });
+    expect(retry.status).toBe(200);
+    expect(calls.filter((c) => /\/confirm$/.test(c.url))).toHaveLength(0);
+  });
+
+  it("ignores payouts in the default mode, where the charge already confirmed", async () => {
+    payoutCharges = [{ id: "ch_x", metadata: { order_reference: "DNR-X" } }];
+    const { webhook } = await boot(LIVE_ENV);
+
+    const response = await deliver(webhook, {
+      id: "evt_p4",
+      type: "payout.paid",
+      data: { object: { id: "po_3", object: "payout" } },
+    });
+
+    expect(await response.json()).toEqual({ received: true, ignored: "payout.paid" });
+    expect(find(/balance_transactions/)).toBeUndefined();
+    expect(find(/\/confirm$/)).toBeUndefined();
+  });
+
+  it("leaves drafts alone when a payout fails", async () => {
+    const { webhook } = await boot(PAYOUT_ENV);
+    const response = await deliver(webhook, {
+      id: "evt_p5",
+      type: "payout.failed",
+      data: { object: { id: "po_4", object: "payout", status: "failed" } },
+    });
+    expect(await response.json()).toEqual({ received: true, confirmed: false });
+    expect(find(/\/confirm$/)).toBeUndefined();
+  });
+
+  it("never confirms a payout of test money", async () => {
+    payoutCharges = [{ id: "ch_t", metadata: { order_reference: "DNR-T" } }];
+    const { webhook } = await boot({ ...PAYOUT_ENV, STRIPE_SECRET_KEY: "sk_test_fake" });
+    const response = await deliver(webhook, {
+      id: "evt_p6",
+      type: "payout.paid",
+      data: { object: { id: "po_5", object: "payout" } },
+    });
+    expect(await response.json()).toEqual({ received: true, confirmed: false, testMode: true });
+    expect(find(/\/confirm$/)).toBeUndefined();
+  });
+
+  it("defers to pre-order mode, where every confirm is a human act", async () => {
+    payoutCharges = [{ id: "ch_pre", metadata: { order_reference: "DNR-PRE" } }];
+    const { webhook } = await boot({ ...PAYOUT_ENV, PREORDER_MODE: "true" });
+    const response = await deliver(webhook, {
+      id: "evt_p7",
+      type: "payout.paid",
+      data: { object: { id: "po_6", object: "payout" } },
+    });
+    expect(await response.json()).toEqual({ received: true, ignored: "payout.paid" });
     expect(find(/\/confirm$/)).toBeUndefined();
   });
 });

@@ -61,8 +61,11 @@ export const stripeProvider: PaymentProvider = {
   id: "stripe",
   label: "Card payment",
 
-  customerNotice:
-    "You'll be taken to Stripe to pay securely. Your order goes into production once payment clears.",
+  // Confirm-on-payout adds a few days before production; say so up front
+  // rather than letting the buyer expect an immediate start.
+  customerNotice: config.confirmOnPayout
+    ? "You'll be taken to Stripe to pay securely. Your order goes into production once your payment settles, usually within a few business days."
+    : "You'll be taken to Stripe to pay securely. Your order goes into production once payment clears.",
 
   async createPayment(request: PaymentRequest): Promise<PaymentResult> {
     const secretKey = config.payments.stripeSecretKey;
@@ -80,6 +83,14 @@ export const stripeProvider: PaymentProvider = {
       // Ties the Stripe session back to our order and Printful's external_id.
       client_reference_id: request.reference,
       metadata: { order_reference: request.reference },
+      // The same reference on the PaymentIntent, which Stripe copies onto the
+      // charge. A payout only knows its charges, so this is how confirm-on-
+      // payout finds the order behind each one without a database of our own.
+      // The description is for a human reading the Stripe dashboard.
+      payment_intent_data: {
+        metadata: { order_reference: request.reference },
+        description: `${config.brand.name} order ${request.reference}`,
+      },
       line_items: request.lines.map((line) => {
         const image = publicImageUrl(line.image);
         return {
