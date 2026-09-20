@@ -239,9 +239,18 @@ serverless functions. `netlify.toml` only pins the Node version and caching.
 
 4. Trigger a redeploy so the build picks up the variables.
 5. In Stripe, add a webhook endpoint at
-   `https://your-site/api/webhooks/stripe` for `checkout.session.completed`
-   (plus `payout.paid` if `CONFIRM_ON_PAYOUT` is on), and put its signing
-   secret into `STRIPE_WEBHOOK_SECRET`.
+   `https://your-site/api/webhooks/stripe` for `checkout.session.completed`,
+   `checkout.session.async_payment_succeeded`,
+   `checkout.session.async_payment_failed`, `payout.paid`, `payout.failed` and
+   `payout.canceled`, and put its signing secret into `STRIPE_WEBHOOK_SECRET`.
+6. Open `/admin` and press **Check keys**. It says whether Stripe and Printful
+   accept their keys, whether the signing secret could ever verify anything
+   (a pasted secret with stray characters is the quietest failure there is),
+   and whether Stripe's endpoint is at the right address with every event
+   on. **Fix webhook** moves a mistyped endpoint to the right address, keeping
+   its secret, or switches on missing events. With `CONFIRM_ON_PAYOUT`,
+   **Settle payouts** confirms any draft whose money Stripe has already paid
+   out, so a missed `payout.paid` never leaves a paid order unprinted.
 
 Free tier limits are 100 GB bandwidth and 300 build minutes a month — far
 beyond a new shop. Every push to `main` redeploys.

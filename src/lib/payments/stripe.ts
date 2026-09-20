@@ -161,6 +161,7 @@ export const stripeProvider: PaymentProvider = {
 };
 
 export {
+  encodeForm,
   encodeForm as __encodeFormForTests,
   publicImageUrl as __publicImageUrlForTests,
 };
