@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "deny": [
+      "Bash(netlify deploy:*)",
+      "Bash(npx netlify deploy:*)",
+      "Bash(netlify env:*)",
+      "Bash(npx netlify env:*)",
+      "Bash(firebase deploy:*)",
+      "Bash(npx firebase deploy:*)",
+      "Bash(firebase apphosting:*)",
+      "Bash(npx firebase apphosting:*)",
+      "Bash(git push origin main)",
+      "Bash(git push origin main:*)",
+      "Bash(git push -u origin main)",
+      "Bash(git push --force:*)",
+      "Bash(git push -f:*)",
+      "Bash(git push --force-with-lease:*)",
+      "Bash(gh pr merge:*)",
+      "Bash(git reset --hard:*)",
+      "Read(./.env)",
+      "Read(./.env.*)"
+    ]
+  }
+}
