@@ -1,0 +1,26 @@
+# Every pull request and every push to main must pass this before it can be
+# trusted: the unit tests (money, cart, catalog, webhook signature, payouts,
+# the admin checks), the type check, the linter, and a production build. The
+# build runs with no credentials on purpose: the storefront boots on its demo
+# catalog and the manual payment provider, so a build here proves the code,
+# not the keys.
+name: CI
+on:
+  pull_request:
+  push:
+    branches: [main]
+jobs:
+  checks:
+    name: Tests, types, lint, build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run build
