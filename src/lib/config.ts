@@ -14,6 +14,22 @@ function optional(name: string): string | undefined {
   return value ? value : undefined;
 }
 
+/**
+ * A secret as it was pasted. Quotes, line breaks, spaces and the invisible
+ * characters a copy from a web page can carry are never part of a key, and a
+ * key with one of them in it fails in the least visible way there is: every
+ * Stripe call rejected, every webhook refused, nothing on screen to say why.
+ */
+export function cleanSecret(raw: string | undefined): string | undefined {
+  if (!raw) return undefined;
+  const value = raw.replace(/[\s"'​-‍﻿\u0000-\u001F\u007F]/g, "");
+  return value ? value : undefined;
+}
+
+function secret(name: string): string | undefined {
+  return cleanSecret(process.env[name]);
+}
+
 /** A positive integer or nothing; a garbled value must not close the shop. */
 function parseCap(value: string | undefined): number | null {
   if (!value) return null;
@@ -25,8 +41,8 @@ function parseCap(value: string | undefined): number | null {
   return parsed;
 }
 
-const printfulToken = optional("PRINTFUL_API_KEY");
-const stripeSecret = optional("STRIPE_SECRET_KEY");
+const printfulToken = secret("PRINTFUL_API_KEY");
+const stripeSecret = secret("STRIPE_SECRET_KEY");
 
 const paymentProviderId = stripeSecret ? ("stripe" as const) : ("manual" as const);
 const autoConfirmRequested = optional("PRINTFUL_AUTO_CONFIRM") === "true";
@@ -91,7 +107,7 @@ export const config = {
     provider: paymentProviderId,
     stripeSecretKey: stripeSecret,
     stripePublishableKey: optional("STRIPE_PUBLISHABLE_KEY"),
-    stripeWebhookSecret: optional("STRIPE_WEBHOOK_SECRET"),
+    stripeWebhookSecret: secret("STRIPE_WEBHOOK_SECRET"),
     /**
      * Pins the Stripe API version for outgoing calls. Unset means Stripe uses
      * the account's default, which Stripe can move — pinning makes upgrades a

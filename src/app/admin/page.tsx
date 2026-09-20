@@ -9,6 +9,7 @@ import {
 import { listAdminOrders } from "@/lib/admin/orders";
 import { config } from "@/lib/config";
 import { isDemoCatalog } from "@/lib/printful/store";
+import { ChecksPanel } from "./checks-panel";
 import { ConfirmButton } from "./confirm-button";
 import { LogoutButton } from "./logout-button";
 
@@ -68,6 +69,8 @@ export default async function AdminPage() {
           <p className="mt-1 text-sm text-bone">{orders.length}</p>
         </div>
       </div>
+
+      <ChecksPanel />
 
       {isDemoCatalog() ? (
         <p className="label mt-10 text-bone-faint">
